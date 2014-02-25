@@ -33,7 +33,19 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 
-// TODO!
+/*
+ * TODO:
+ *
+ * - find a reasonable size for DEFAULT_MAPPING_SIZE
+ * - calculate an optimum size for the CharBuffer used for decoding (probably
+ *   by using CharsetDecoder's .averageCharsPerByte())
+ * - deal with overly large files (ie, with more than Integer.MAX_VALUE chars)
+ * - deal with small sizes
+ * - implement .subsequence()
+ *
+ * FIXME: .length() is quite the nightmare; it requires to read the whole file
+ * once.
+ */
 public final class LargeTextFile
     implements CharSequence, Closeable
 {
