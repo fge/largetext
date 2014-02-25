@@ -40,9 +40,29 @@ public final class LargeTextFile
     // 256K for now
     private static final long DEFAULT_MAPPING_SIZE = 1L << 18;
 
+    /**
+     * Charset used for decoding this file's contents
+     */
     private final Charset charset;
+
+    /**
+     * {@link FileChannel} used for this file
+     */
     private final FileChannel channel;
+
+    /**
+     * Size of the channel
+     */
     private final long fileSize;
+
+    /**
+     * Number of characters
+     */
+    private final int totalChars;
+
+    /**
+     * List of {@link CharWindow}s
+     */
     private final List<CharWindow> windows = new ArrayList<>();
 
     public LargeTextFile(final String name, final Charset charset)
@@ -52,6 +72,9 @@ public final class LargeTextFile
         channel = FileChannel.open(Paths.get(name), StandardOpenOption.READ);
         fileSize = channel.size();
         fillWindows();
+
+        final CharWindow lastWindow = windows.get(windows.size() - 1);
+        totalChars = lastWindow.getCharOffset() + lastWindow.getCharLength();
     }
 
     public LargeTextFile(final String name)
@@ -63,7 +86,7 @@ public final class LargeTextFile
     @Override
     public int length()
     {
-        return 0;
+        return totalChars;
     }
 
     @Override
