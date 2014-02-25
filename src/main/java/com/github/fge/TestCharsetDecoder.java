@@ -33,7 +33,11 @@ public final class TestCharsetDecoder
      * - the default action on an unmappable byte sequence is to throw an
      *   exception;
      * - the input `ByteBuffer`'s position _is_ modified after a decoding
-     *   action is complete.
+     *   action is complete;
+     * - on failure, the buffer position is set to the end of the successfully
+     *   encoded byte sequence, at least on a MalformedInputException
+     *
+     * TODO: try and generate an UnmappableCharacterException
      */
     public static void main(final String... args)
         throws CharacterCodingException
@@ -41,16 +45,24 @@ public final class TestCharsetDecoder
         final String input = "Mémé";
         final Charset charset = StandardCharsets.UTF_8;
         final byte[] array = input.getBytes(charset);
-        final ByteBuffer buf = ByteBuffer.allocate(array.length + 1);
+        final ByteBuffer buf = ByteBuffer.allocate(array.length + 2);
         buf.put(array);
         buf.put((byte) 0xfe); // Completely random
+        buf.put((byte) 0x0c); // Completely random
         buf.rewind();
         final CharsetDecoder decoder = charset.newDecoder();
-        buf.limit(6);
-        final CharBuffer decoded = decoder.decode(buf);
-
-        System.out.println(buf.position());
+        //buf.limit(6);
+        CharBuffer decoded;
+        try {
+            decoded = decoder.decode(buf);
+        } catch (CharacterCodingException e) {
+            System.err.println("Aiie " + buf.position());
+            buf.flip();
+            decoded = decoder.decode(buf);
+        }
         System.out.println(decoded);
+
+        System.exit(0);
 
     }
 }
