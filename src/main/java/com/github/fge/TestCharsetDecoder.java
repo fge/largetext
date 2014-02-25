@@ -23,6 +23,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
 
 public final class TestCharsetDecoder
@@ -55,7 +56,7 @@ public final class TestCharsetDecoder
         CharBuffer decoded;
         try {
             decoded = decoder.decode(buf);
-        } catch (CharacterCodingException e) {
+        } catch (MalformedInputException e) {
             System.err.println("Aiie " + buf.position());
             buf.flip();
             decoded = decoder.decode(buf);
