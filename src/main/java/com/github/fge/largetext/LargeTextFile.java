@@ -20,11 +20,38 @@ package com.github.fge.largetext;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.List;
 
 // TODO!
 public final class LargeTextFile
     implements CharSequence, Closeable
 {
+    // 256K for now
+    private static final long MAPPING_LENGTH = 1L << 28;
+
+    private final Charset charset;
+    private final FileChannel channel;
+    private final List<CharWindow> windows = new ArrayList<>();
+
+    public LargeTextFile(final String name, final Charset charset)
+        throws IOException
+    {
+        this.charset = charset;
+        channel = FileChannel.open(Paths.get(name), StandardOpenOption.READ);
+    }
+
+    public LargeTextFile(final String name)
+        throws IOException
+    {
+        this(name, StandardCharsets.UTF_8);
+    }
+
     @Override
     public int length()
     {
@@ -47,6 +74,6 @@ public final class LargeTextFile
     public void close()
         throws IOException
     {
-
+        channel.close();
     }
 }
