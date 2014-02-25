@@ -62,6 +62,8 @@ public final class LargeTextFile
      */
     private final FileChannel channel;
 
+    private final long mappingSize;
+
     /**
      * Size of the channel
      */
@@ -80,6 +82,7 @@ public final class LargeTextFile
     public LargeTextFile(final String name, final Charset charset)
         throws IOException
     {
+        mappingSize = DEFAULT_MAPPING_SIZE;
         this.charset = charset;
         channel = FileChannel.open(Paths.get(name), StandardOpenOption.READ);
         fileSize = channel.size();
@@ -93,6 +96,21 @@ public final class LargeTextFile
         throws IOException
     {
         this(name, StandardCharsets.UTF_8);
+    }
+
+    // For tests only
+    LargeTextFile(final FileChannel channel, final Charset charset,
+        final long mappingSize)
+        throws IOException
+    {
+        this.mappingSize = mappingSize;
+        this.charset = charset;
+        this.channel = channel;
+        fileSize = channel.size();
+        fillWindows();
+
+        final CharWindow lastWindow = windows.get(windows.size() - 1);
+        totalChars = lastWindow.getCharOffset() + lastWindow.getCharLength();
     }
 
     @Override
@@ -126,7 +144,7 @@ public final class LargeTextFile
         final CharsetDecoder decoder = charset.newDecoder()
             .onMalformedInput(CodingErrorAction.REPORT)
             .onUnmappableCharacter(CodingErrorAction.REPORT);
-        final CharBuffer buf = CharBuffer.allocate(1 << 18);
+        final CharBuffer buf = CharBuffer.allocate((int) mappingSize);
 
         long fileOffset = 0L, windowLength;
         int charOffset = 0;
@@ -151,8 +169,7 @@ public final class LargeTextFile
         final CharBuffer buf)
         throws IOException
     {
-        long mappingSize = Math.min(fileOffset + DEFAULT_MAPPING_SIZE,
-            fileSize);
+        long mappingSize = Math.min(fileOffset + this.mappingSize, fileSize);
 
         final MappedByteBuffer mapping
             = channel.map(FileChannel.MapMode.READ_ONLY, fileOffset,
