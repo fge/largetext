@@ -169,11 +169,11 @@ public final class LargeTextFile
         final CharBuffer buf)
         throws IOException
     {
-        long mappingSize = Math.min(fileOffset + this.mappingSize, fileSize);
+        long mapSize = Math.min(mappingSize, fileSize - fileOffset);
 
         final MappedByteBuffer mapping
             = channel.map(FileChannel.MapMode.READ_ONLY, fileOffset,
-                mappingSize);
+                mapSize);
 
         buf.rewind();
         decoder.reset();
@@ -189,9 +189,9 @@ public final class LargeTextFile
          * what was actually read; change the mapping size
          */
         if (result.isMalformed())
-            mappingSize = (long) mapping.position();
+            mapSize = (long) mapping.position();
 
-        return new CharWindow(fileOffset, mappingSize, charOffset,
+        return new CharWindow(fileOffset, mapSize, charOffset,
             buf.position());
     }
 }
