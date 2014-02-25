@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
 
 public final class LargeTextFileTest
@@ -74,8 +73,8 @@ public final class LargeTextFileTest
         final Path path = createFile(s, charset, occurrences);
 
         try (
-            final FileChannel channel = spy(FileChannel.open(path,
-                StandardOpenOption.READ));
+            final FileChannel channel = FileChannel.open(path,
+                StandardOpenOption.READ);
             final LargeTextFile textFile
                 = new LargeTextFile(channel, charset, 1L << 10);
         ) {
