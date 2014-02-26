@@ -120,9 +120,13 @@ public final class LargeTextFileTest
         final Path file = createFile(s, StandardCharsets.UTF_8, 10000);
 
         try (
-            final LargeTextFile textFile = new LargeTextFile(file.toString());
+            final LargeTextFile textFile = new LargeTextFile(file.toString(),
+                StandardCharsets.UTF_8, 2500L);
         ) {
             assertEquals(textFile.charAt(4), 'ê');
+            assertEquals(textFile.charAt(99999), '%');
+            assertEquals(textFile.charAt(35042), 'a');
+            assertEquals(textFile.charAt(12000), 'Ë');
         }
     }
 
