@@ -92,11 +92,11 @@ public final class LargeTextFileTest
         Files.delete(tempDir);
     }
 
-    private static Path createFile(final String s, final Charset charset,
+    private Path createFile(final String s, final Charset charset,
         final int occurrences)
         throws IOException
     {
-        final Path ret = Files.createTempFile("foo", "txt");
+        final Path ret = Files.createTempFile(tempDir, "foo", "txt");
         try (
             final Writer writer = Files.newBufferedWriter(ret, charset);
         ) {
