@@ -110,7 +110,20 @@ public final class LargeTextFileTest
             assertEquals(e.getMessage(),
                 BUNDLE.printf("err.invalidData", array.length));
         }
+    }
 
+    @Test
+    public void chatAtWorks()
+        throws IOException
+    {
+        final String s = "Ë`ajê1RfD%";
+        final Path file = createFile(s, StandardCharsets.UTF_8, 10000);
+
+        try (
+            final LargeTextFile textFile = new LargeTextFile(file.toString());
+        ) {
+            assertEquals(textFile.charAt(4), 'ê');
+        }
     }
 
     @AfterClass
