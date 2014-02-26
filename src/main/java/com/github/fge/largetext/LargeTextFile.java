@@ -45,9 +45,16 @@ import java.util.List;
  * - deal with overly large files (ie, with more than Integer.MAX_VALUE chars)
  * - deal with small sizes
  * - implement .subsequence()
+ * - optimize for character sets whose average chars per bytes is exactly 1
  *
  * FIXME: .length() is quite the nightmare; it requires to read the whole file
- * once.
+ * once. We cannot even optimize construction of 1-byte encodings because of
+ * that! (or can we?)
+ *
+ * NOTE: if using .averageCharsPerByte(), remember to deal with an overflow
+ * error. Right now, the created CharBuffer has the same length as the mapping
+ * size, which is always enough; this is of course untrue for variable length
+ * encodings, the most prominent of them being UTF-8.
  */
 public final class LargeTextFile
     implements CharSequence, Closeable
