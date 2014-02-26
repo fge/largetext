@@ -55,6 +55,13 @@ import java.util.List;
  * error. Right now, the created CharBuffer has the same length as the mapping
  * size, which is always enough; this is of course untrue for variable length
  * encodings, the most prominent of them being UTF-8.
+ *
+ * SCALING: right now, the whole file is read at build time. This is not good.
+ *
+ * Plan: use a thread to read the character windows; methods will wait on a
+ * Condition on the number of characters read so far. One problem with this
+ * approach is that no method in the `CharSequence` interface throws an
+ * exception, so a RuntimeException will have to be thrown instead.
  */
 public final class LargeTextFile
     implements CharSequence, Closeable
