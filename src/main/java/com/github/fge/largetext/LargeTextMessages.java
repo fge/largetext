@@ -19,9 +19,8 @@
 package com.github.fge.largetext;
 
 import com.github.fge.msgsimple.bundle.MessageBundle;
+import com.github.fge.msgsimple.bundle.PropertiesBundle;
 import com.github.fge.msgsimple.load.MessageBundleLoader;
-import com.github.fge.msgsimple.source.MapMessageSource;
-import com.github.fge.msgsimple.source.MessageSource;
 
 public final class LargeTextMessages
     implements MessageBundleLoader
@@ -29,10 +28,6 @@ public final class LargeTextMessages
     @Override
     public MessageBundle getBundle()
     {
-        final MessageSource source = MapMessageSource.newBuilder()
-            .put("err.invalidData",
-                "unable to read file as text starting from offset %d")
-            .build();
-        return MessageBundle.withSingleSource(source);
+        return PropertiesBundle.forPath("/com/github/fge/largetext/messages");
     }
 }
