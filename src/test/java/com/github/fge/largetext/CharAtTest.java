@@ -27,7 +27,6 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
@@ -41,10 +40,12 @@ import java.util.List;
 
 import static org.testng.Assert.*;
 
-public final class LargeTextFileTest
+public final class CharAtTest
 {
     private static final MessageBundle BUNDLE
         = MessageBundles.getBundle(LargeTextMessages.class);
+
+    private static final String INPUT = "Ë`ajê1RfD%";
 
     private Path tempDir;
 
@@ -56,59 +57,28 @@ public final class LargeTextFileTest
     }
 
     @DataProvider
-    public Iterator<Object[]> standardCharsets()
+    public Iterator<Object[]> indicesAndCharacters()
     {
         final List<Object[]> list = new ArrayList<>();
-
-        list.add(new Object[] { StandardCharsets.UTF_8 });
-        list.add(new Object[] { StandardCharsets.UTF_16 });
-        list.add(new Object[] { StandardCharsets.UTF_16BE });
-        list.add(new Object[] { StandardCharsets.UTF_16LE });
-        list.add(new Object[] { StandardCharsets.US_ASCII });
-        list.add(new Object[] { StandardCharsets.ISO_8859_1 });
+        list.add(new Object [] { 4, 'ê' });
+        list.add(new Object [] { 99999, '%' });
+        list.add(new Object [] { 35042, 'a' });
+        list.add(new Object [] { 12000, 'Ë' });
 
         return list.iterator();
     }
 
-    @Test(dataProvider = "standardCharsets")
-    public void lengthIsCorrectlyReported(final Charset charset)
+    @Test(dataProvider = "indicesAndCharacters")
+    public void chatAtWorks(final int index, final char c)
         throws IOException
     {
-        final String s = "only ASCII chars to start with";
-        final int occurrences = 20;
-        final int nrChars = s.length() * occurrences;
-        final Path path = createFile(s, charset, occurrences);
+        final Path file = createFile(INPUT, StandardCharsets.UTF_8, 10000);
 
         try (
-            final LargeTextFile textFile
-                = new LargeTextFile(path.toString(), charset, 1L << 10);
+            final LargeTextFile textFile = new LargeTextFile(file.toString(),
+                StandardCharsets.UTF_8, 2500L);
         ) {
-            assertEquals(textFile.length(), nrChars);
-        }
-    }
-
-    // FIXME: not ideal...
-    @Test
-    public void invalidByteSequenceGeneratesAnException()
-        throws IOException
-    {
-        final String s = "whatever";
-        final byte[] array = s.getBytes(StandardCharsets.UTF_8);
-        final ByteBuffer buf = ByteBuffer.allocate(array.length + 1);
-        buf.put(array);
-        buf.put((byte) 0xfe); // FIXME: random, but works for this test...
-
-        final Path tempFile = tempDir.resolve("invalid.txt");
-        Files.write(tempFile, buf.array());
-
-        try (
-            final LargeTextFile textFile
-                = new LargeTextFile(tempFile.toString());
-        ) {
-            fail("I should not have reached this place");
-        } catch (IOException e) {
-            assertEquals(e.getMessage(),
-                BUNDLE.printf("err.invalidData", array.length));
+            assertEquals(textFile.charAt(index), c);
         }
     }
 
