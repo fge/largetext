@@ -18,6 +18,8 @@
 
 package com.github.fge.largetext;
 
+import com.github.fge.msgsimple.bundle.MessageBundle;
+import com.github.fge.msgsimple.load.MessageBundles;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -25,6 +27,7 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -39,6 +42,9 @@ import static org.testng.Assert.*;
 
 public final class LargeTextFileTest
 {
+    private static final MessageBundle BUNDLE
+        = MessageBundles.getBundle(LargeTextMessages.class);
+
     private Path tempDir;
 
     @BeforeClass
@@ -82,7 +88,33 @@ public final class LargeTextFileTest
         } finally {
             Files.delete(path);
         }
+    }
 
+    // FIXME: not ideal...
+    @Test
+    public void invalidByteSequenceGeneratesAnException()
+        throws IOException
+    {
+        final String s = "whatever";
+        final byte[] array = s.getBytes(StandardCharsets.UTF_8);
+        final ByteBuffer buf = ByteBuffer.allocate(array.length + 1);
+        buf.put(array);
+        buf.put((byte) 0xfe); // FIXME: random, but works for this test...
+
+        final Path tempFile = tempDir.resolve("invalid.txt");
+        Files.write(tempFile, buf.array());
+
+        try (
+            final LargeTextFile textFile
+                = new LargeTextFile(tempFile.toString());
+        ) {
+            fail("I should not have reached this place");
+        } catch (IOException e) {
+            assertEquals(e.getMessage(),
+                BUNDLE.printf("err.invalidData", array.length));
+        }
+
+        Files.delete(tempFile);
     }
 
     @AfterClass
