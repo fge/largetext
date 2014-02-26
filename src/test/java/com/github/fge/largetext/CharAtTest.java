@@ -76,7 +76,7 @@ public final class CharAtTest
 
         try (
             final LargeTextFile textFile = new LargeTextFile(file.toString(),
-                StandardCharsets.UTF_8, 2500L);
+                StandardCharsets.UTF_8, 10L);
         ) {
             assertEquals(textFile.charAt(index), c);
         }

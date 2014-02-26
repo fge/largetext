@@ -80,7 +80,7 @@ public final class CharWindow
 
     public boolean containsCharAtIndex(final int charIndex)
     {
-        return charOffset <= charIndex && charIndex <= charOffset + charLength;
+        return charOffset <= charIndex && charIndex < charOffset + charLength;
     }
 
     public boolean containsRange(final int start, final int end)
