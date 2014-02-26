@@ -18,11 +18,17 @@
 
 package com.github.fge.largetext;
 
+import com.github.fge.msgsimple.bundle.MessageBundle;
+import com.github.fge.msgsimple.load.MessageBundles;
+
 /**
  * One window within a text file
  */
 public final class CharWindow
 {
+    private static final MessageBundle BUNDLE
+        = MessageBundles.getBundle(LargeTextMessages.class);
+
     /**
      * Offset in the file where this window starts
      */
@@ -75,5 +81,19 @@ public final class CharWindow
     public boolean containsCharAtIndex(final int charIndex)
     {
         return charOffset <= charIndex && charIndex <= charOffset + charLength;
+    }
+
+    public CharWindow mergeWith(final CharWindow other)
+    {
+        final int expectedCharOffset = charOffset + charLength;
+        final long expectedFileOffset = fileOffset + windowLength;
+
+        BUNDLE.checkArgumentPrintf(other.charOffset == expectedCharOffset,
+            "charWindow.wrongCharOffset", expectedCharOffset, other.charOffset);
+        BUNDLE.checkArgumentPrintf(other.fileOffset == expectedFileOffset,
+            "charWindow.wrongFileOffset", expectedFileOffset, other.fileOffset);
+
+        return new CharWindow(fileOffset, windowLength + other.windowLength,
+            charOffset, charLength + other.charLength);
     }
 }
