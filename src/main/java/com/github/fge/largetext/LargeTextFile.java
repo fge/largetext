@@ -36,6 +36,8 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.nio.channels.FileChannel.MapMode;
+
 /*
  * TODO:
  *
@@ -142,7 +144,15 @@ public final class LargeTextFile
     @Override
     public char charAt(final int index)
     {
-        return 0;
+        final CharWindow window = getWindowForIndex(index);
+        final CharBuffer buf;
+        try {
+            buf = bufferFromWindow(window);
+            return buf.charAt(index - window.getCharOffset());
+        } catch (IOException e) {
+            throw new RuntimeException("I/O error when reading file mapping",
+                e);
+        }
     }
 
     @Override
@@ -191,9 +201,8 @@ public final class LargeTextFile
     {
         long mapSize = Math.min(mappingSize, fileSize - fileOffset);
 
-        final MappedByteBuffer mapping
-            = channel.map(FileChannel.MapMode.READ_ONLY, fileOffset,
-                mapSize);
+        final MappedByteBuffer mapping = channel.map(MapMode.READ_ONLY,
+            fileOffset, mapSize);
 
         buf.rewind();
         decoder.reset();
@@ -213,5 +222,24 @@ public final class LargeTextFile
 
         return new CharWindow(fileOffset, mapSize, charOffset,
             buf.position());
+    }
+
+    // NOTE: "malformed" indices to be detected in callers
+    private CharWindow getWindowForIndex(final int index)
+    {
+        for (final CharWindow window: windows)
+            if (window.containsCharAtIndex(index))
+                return window;
+
+        throw new IllegalStateException("should not have reached this point");
+    }
+
+    // NOTE: cannot fail at this point
+    private CharBuffer bufferFromWindow(final CharWindow window)
+        throws IOException
+    {
+        final MappedByteBuffer buffer = channel.map(MapMode.READ_ONLY,
+            window.getFileOffset(), window.getWindowLength());
+        return charset.newDecoder().decode(buffer);
     }
 }

@@ -71,4 +71,9 @@ public final class CharWindow
     {
         return charLength;
     }
+
+    public boolean containsCharAtIndex(final int charIndex)
+    {
+        return charOffset <= charIndex && charIndex <= charOffset + charLength;
+    }
 }
