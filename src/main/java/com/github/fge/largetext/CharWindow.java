@@ -83,6 +83,11 @@ public final class CharWindow
         return charOffset <= charIndex && charIndex <= charOffset + charLength;
     }
 
+    public boolean containsRange(final int start, final int end)
+    {
+        return start >= charOffset && end - start + 1 <= charLength;
+    }
+
     public CharWindow mergeWith(final CharWindow other)
     {
         final int expectedCharOffset = charOffset + charLength;

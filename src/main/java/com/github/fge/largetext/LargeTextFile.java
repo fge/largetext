@@ -34,6 +34,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import static java.nio.channels.FileChannel.MapMode;
@@ -145,6 +146,7 @@ public final class LargeTextFile
     @Override
     public char charAt(final int index)
     {
+        // TODO: argument checking
         final CharWindow window = getWindowForIndex(index);
         final CharBuffer buf;
         try {
@@ -159,7 +161,26 @@ public final class LargeTextFile
     @Override
     public CharSequence subSequence(final int start, final int end)
     {
-        return null;
+        // TODO: argument checking
+        final int index = getIndexOfStartWindow(start);
+
+        final Iterator<CharWindow> iterator = windows.listIterator(index);
+
+        CharWindow window = iterator.next();
+
+        while (!window.containsRange(start, end))
+            window = window.mergeWith(iterator.next());
+
+        final int windowStart = window.getCharOffset();
+
+        try {
+            final CharBuffer buf;
+            buf = bufferFromWindow(window);
+            return buf.subSequence(start - windowStart, end - windowStart);
+        } catch (IOException e) {
+            throw new RuntimeException("I/O error when reading file mapping",
+                e);
+        }
     }
 
     @Override
@@ -242,5 +263,17 @@ public final class LargeTextFile
         final MappedByteBuffer buffer = channel.map(MapMode.READ_ONLY,
             window.getFileOffset(), window.getWindowLength());
         return charset.newDecoder().decode(buffer);
+    }
+
+    private int getIndexOfStartWindow(final int start)
+    {
+        CharWindow window;
+        for (int i = 0; i < windows.size(); i++) {
+            window = windows.get(i);
+            if (window.containsCharAtIndex(start))
+                return i;
+        }
+
+        return -1;
     }
 }
