@@ -84,8 +84,6 @@ public final class LargeTextFileTest
                 = new LargeTextFile(path.toString(), charset, 1L << 10);
         ) {
             assertEquals(textFile.length(), nrChars);
-        } finally {
-            Files.delete(path);
         }
     }
 
@@ -113,7 +111,6 @@ public final class LargeTextFileTest
                 BUNDLE.printf("err.invalidData", array.length));
         }
 
-        Files.delete(tempFile);
     }
 
     @AfterClass
