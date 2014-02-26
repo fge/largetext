@@ -77,12 +77,6 @@ public final class LargeTextFileTest
         throws IOException
     {
         final String s = "only ASCII chars to start with";
-        /*
-         * TODO: use that for UnmappableCharacterException
-         *
-         * Cannot be encoded in US_ASCII
-         */
-//      final String s = "Pousser Mémé dans les orties, ça se fait pas";
         final int occurrences = 20;
         final int nrChars = s.length() * occurrences;
         final Path path = createFile(s, charset, occurrences);
