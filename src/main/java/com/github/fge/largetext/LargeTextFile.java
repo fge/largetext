@@ -121,13 +121,13 @@ public final class LargeTextFile
     }
 
     // For tests only
-    LargeTextFile(final FileChannel channel, final Charset charset,
+    LargeTextFile(final String name, final Charset charset,
         final long mappingSize)
         throws IOException
     {
         this.mappingSize = mappingSize;
         this.charset = charset;
-        this.channel = channel;
+        channel = FileChannel.open(Paths.get(name), StandardOpenOption.READ);
         fileSize = channel.size();
         fillWindows();
 

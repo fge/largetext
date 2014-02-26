@@ -28,14 +28,12 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -82,10 +80,8 @@ public final class LargeTextFileTest
         final Path path = createFile(s, charset, occurrences);
 
         try (
-            final FileChannel channel = FileChannel.open(path,
-                StandardOpenOption.READ);
             final LargeTextFile textFile
-                = new LargeTextFile(channel, charset, 1L << 10);
+                = new LargeTextFile(path.toString(), charset, 1L << 10);
         ) {
             assertEquals(textFile.length(), nrChars);
         } finally {
