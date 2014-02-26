@@ -18,6 +18,9 @@
 
 package com.github.fge.largetext;
 
+import com.github.fge.msgsimple.bundle.MessageBundle;
+import com.github.fge.msgsimple.load.MessageBundles;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.CharBuffer;
@@ -49,6 +52,9 @@ import java.util.List;
 public final class LargeTextFile
     implements CharSequence, Closeable
 {
+    private static final MessageBundle BUNDLE
+        = MessageBundles.getBundle(LargeTextMessages.class);
+
     // 256K for now
     private static final long DEFAULT_MAPPING_SIZE = 1L << 18;
 
@@ -155,8 +161,8 @@ public final class LargeTextFile
             // FIXME
             windowLength = window.getWindowLength();
             if (windowLength == 0L)
-                throw new IOException("Unable to read as text file from offset"
-                     + fileOffset);
+                throw new IOException(BUNDLE.printf("err.invalidData",
+                    fileOffset));
             windows.add(window);
             charOffset += window.getCharLength();
             fileOffset += windowLength;
