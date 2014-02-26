@@ -31,9 +31,12 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -121,7 +124,51 @@ public final class LargeTextFileTest
     public void removeTempDir()
         throws IOException
     {
-        Files.delete(tempDir);
+        /*
+         * Code adapted from:
+         *
+         * http://javatutorialhq.com/java/example-source-code/io/nio/delete-directory/
+         */
+        Files.walkFileTree(tempDir, new FileVisitor<Path>()
+        {
+            @Override
+            public FileVisitResult preVisitDirectory(final Path dir,
+                final BasicFileAttributes attrs)
+                throws IOException
+            {
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(final Path file,
+                final BasicFileAttributes attrs)
+                throws IOException
+            {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(final Path file,
+                final IOException exc)
+                throws IOException
+            {
+                throw exc;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(final Path dir,
+                final IOException exc)
+                throws IOException
+            {
+                // FIXME: normally, .visitFileFailed() should have failed at
+                // this point -- shouldn't it?
+                if (exc != null)
+                    throw exc;
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
     private Path createFile(final String s, final Charset charset,
