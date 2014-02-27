@@ -18,22 +18,36 @@
 
 package com.github.fge.largetext;
 
+import com.github.fge.msgsimple.bundle.MessageBundle;
+import com.github.fge.msgsimple.load.MessageBundles;
+
+import javax.annotation.concurrent.GuardedBy;
+import java.io.IOException;
+import java.nio.CharBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CoderResult;
+import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static java.nio.channels.FileChannel.*;
+
 final class CharBufferCache
 {
+    private static final MessageBundle BUNDLE
+        = MessageBundles.getBundle(LargeTextMessages.class);
     /*
      * Use daemon threads. We don't give control to the user about the
      * ExecutorService, and we don't have a reliable way to shut it down (a JVM
@@ -57,12 +71,18 @@ final class CharBufferCache
         = Executors.newCachedThreadPool(THREAD_FACTORY);
 
     // FIXME: make the two variables below volatile instead?
-    private final AtomicInteger totalChars = new AtomicInteger(0);
-    private final AtomicBoolean finished = new AtomicBoolean(false);
+    @GuardedBy("lock")
+    private volatile int totalChars = 0;
+    @GuardedBy("lock")
+    private volatile boolean finished = false;
+    @GuardedBy("lock")
+    private volatile IOException exception = null;
 
+    @GuardedBy("lock")
     private final PriorityQueue<RequiredCharacters> queue
         = new PriorityQueue<>();
 
+    @GuardedBy("lock")
     private final List<CharWindow> windows = new ArrayList<>();
 
     private final Lock lock = new ReentrantLock();
@@ -70,18 +90,65 @@ final class CharBufferCache
     private final FileChannel channel;
     private final Charset charset;
     private final long targetMapSize;
+    private final long fileSize;
 
     CharBufferCache(final FileChannel channel, final Charset charset,
         final long targetMapSize)
+        throws IOException
     {
         this.channel = channel;
         this.charset = charset;
         this.targetMapSize = targetMapSize;
+        fileSize = channel.size();
     }
 
 
     void needChars(final int required)
+        throws IOException
     {
+        RequiredCharacters waiter = null;
+
+        lock.lock();
+        try {
+            if (exception != null)
+                throw exception;
+            final int currentTotal = totalChars;
+            if (required > currentTotal) {
+                if (finished)
+                    throw new IndexOutOfBoundsException();
+                waiter = new RequiredCharacters(required);
+                queue.add(waiter);
+            }
+        } finally {
+            lock.unlock();
+        }
+
+        if (waiter != null)
+            try {
+                waiter.await();
+            } catch (InterruptedException ignored) {
+                Thread.currentThread().interrupt();
+            }
+    }
+
+    private FutureTask<CharBuffer> asyncLoad(final CharWindow window)
+    {
+        final Callable<CharBuffer> callable = new Callable<CharBuffer>()
+        {
+            @Override
+            public CharBuffer call()
+                throws IOException
+            {
+                final CharsetDecoder decoder = charset.newDecoder()
+                    .onMalformedInput(CodingErrorAction.REPORT)
+                    .onUnmappableCharacter(CodingErrorAction.REPORT);
+                final MappedByteBuffer buf = channel.map(MapMode.READ_ONLY,
+                    window.getFileOffset(), window.getWindowLength());
+                return decoder.decode(buf);
+            }
+        };
+
+        return new FutureTask<>(callable);
     }
 
     /*
@@ -113,6 +180,95 @@ final class CharBufferCache
         public int compareTo(final RequiredCharacters o)
         {
             return Integer.compare(required, o.required);
+        }
+    }
+
+    private void fillWindows()
+    {
+        final CharsetDecoder decoder = charset.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPORT)
+            .onUnmappableCharacter(CodingErrorAction.REPORT);
+        final CharBuffer buf = CharBuffer.allocate((int) targetMapSize);
+
+        long fileOffset = 0L, windowLength;
+        int charOffset = 0;
+        CharWindow window;
+        IOException caught = null;
+
+        while (fileOffset < fileSize) {
+            try {
+                window = readNextWindow(fileOffset, charOffset, decoder, buf);
+                // FIXME
+                windowLength = window.getWindowLength();
+                if (windowLength == 0L)
+                    throw new IOException(BUNDLE.printf("err.invalidData",
+                        fileOffset));
+            } catch (IOException e) {
+                caught = e;
+                break;
+            }
+            lock.lock();
+            try {
+                windows.add(window);
+                charOffset += window.getCharLength();
+                totalChars = charOffset;
+                fileOffset += windowLength;
+                dequeueWaiters(charOffset);
+            }   finally {
+                lock.unlock();
+            }
+        }
+
+        lock.lock();
+        try {
+            exception = caught;
+            finished = true;
+        } finally {
+            lock.unlock();
+        }
+
+    }
+
+    private CharWindow readNextWindow(final long fileOffset,
+        final int charOffset, final CharsetDecoder decoder,
+        final CharBuffer buf)
+        throws IOException
+    {
+        long mapSize = Math.min(targetMapSize, fileSize - fileOffset);
+
+        final MappedByteBuffer mapping = channel.map(MapMode.READ_ONLY,
+            fileOffset, mapSize);
+
+        buf.rewind();
+        decoder.reset();
+
+        final CoderResult result = decoder.decode(mapping, buf, true);
+
+        // FIXME
+        if (result.isUnmappable())
+            result.throwException();
+
+        /*
+         * Incomplete byte sequence: in this case, the mapping position reflects
+         * what was actually read; change the mapping size
+         */
+        if (result.isMalformed())
+            mapSize = (long) mapping.position();
+
+        return new CharWindow(fileOffset, mapSize, charOffset, buf.position());
+    }
+
+    @GuardedBy("lock")
+    private void dequeueWaiters(final int currentTotal)
+    {
+        RequiredCharacters waiter;
+
+        while (!queue.isEmpty()) {
+            waiter = queue.peek();
+            if (waiter.required > totalChars)
+                break;
+            queue.remove();
+            waiter.wakeUp();
         }
     }
 }
