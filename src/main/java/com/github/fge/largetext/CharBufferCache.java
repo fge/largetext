@@ -33,7 +33,6 @@ import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -66,7 +65,7 @@ final class CharBufferCache
     };
 
     private final ExecutorService executor
-        = Executors.newCachedThreadPool(THREAD_FACTORY);
+        = Executors.newFixedThreadPool(2, THREAD_FACTORY);
 
     // FIXME: make the two variables below volatile instead?
     @GuardedBy("lock")
@@ -77,7 +76,7 @@ final class CharBufferCache
     private volatile IOException exception = null;
 
     @GuardedBy("lock")
-    private final PriorityQueue<RequiredCharacters> queue
+    private final PriorityQueue<RequiredChars> queue
         = new PriorityQueue<>();
 
     @GuardedBy("lock")
@@ -104,7 +103,7 @@ final class CharBufferCache
     void needChars(final int required)
         throws IOException
     {
-        RequiredCharacters waiter = null;
+        RequiredChars waiter = null;
 
         lock.lock();
         try {
@@ -114,7 +113,7 @@ final class CharBufferCache
             if (required > currentTotal) {
                 if (finished)
                     throw new IndexOutOfBoundsException();
-                waiter = new RequiredCharacters(required);
+                waiter = new RequiredChars(required);
                 queue.add(waiter);
             }
         } finally {
@@ -127,38 +126,6 @@ final class CharBufferCache
             } catch (InterruptedException ignored) {
                 Thread.currentThread().interrupt();
             }
-    }
-
-    /*
-     * Inspired from http://stackoverflow.com/a/22055231/1093528
-     */
-    private final class RequiredCharacters
-        implements Comparable<RequiredCharacters>
-    {
-        private final int required;
-        private final CountDownLatch latch = new CountDownLatch(1);
-
-        private RequiredCharacters(final int required)
-        {
-            this.required = required;
-        }
-
-        private void await()
-            throws InterruptedException
-        {
-            latch.await();
-        }
-
-        private void wakeUp()
-        {
-            latch.countDown();
-        }
-
-        @Override
-        public int compareTo(final RequiredCharacters o)
-        {
-            return Integer.compare(required, o.required);
-        }
     }
 
     private void fillWindows()
@@ -204,7 +171,6 @@ final class CharBufferCache
         } finally {
             lock.unlock();
         }
-
     }
 
     private CharWindow readNextWindow(final long fileOffset,
@@ -239,11 +205,11 @@ final class CharBufferCache
     @GuardedBy("lock")
     private void dequeueWaiters(final int currentTotal)
     {
-        RequiredCharacters waiter;
+        RequiredChars waiter;
 
         while (!queue.isEmpty()) {
             waiter = queue.peek();
-            if (waiter.required > currentTotal)
+            if (waiter.getRequired() > currentTotal)
                 break;
             queue.remove();
             waiter.wakeUp();
