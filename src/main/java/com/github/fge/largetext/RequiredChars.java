@@ -29,7 +29,12 @@ final class RequiredChars
     private final int required;
     private final CountDownLatch latch = new CountDownLatch(1);
 
-    RequiredChars(final int required)
+    static RequiredChars require(final int required)
+    {
+        return new RequiredChars(required);
+    }
+
+    private RequiredChars(final int required)
     {
         this.required = required;
     }

@@ -113,7 +113,7 @@ final class CharBufferCache
             if (required > currentTotal) {
                 if (finished)
                     throw new IndexOutOfBoundsException();
-                waiter = new RequiredChars(required);
+                waiter = RequiredChars.require(required);
                 queue.add(waiter);
             }
         } finally {
