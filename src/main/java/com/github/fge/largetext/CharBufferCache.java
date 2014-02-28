@@ -33,11 +33,9 @@ import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -129,26 +127,6 @@ final class CharBufferCache
             } catch (InterruptedException ignored) {
                 Thread.currentThread().interrupt();
             }
-    }
-
-    private FutureTask<CharBuffer> asyncLoad(final CharWindow window)
-    {
-        final Callable<CharBuffer> callable = new Callable<CharBuffer>()
-        {
-            @Override
-            public CharBuffer call()
-                throws IOException
-            {
-                final CharsetDecoder decoder = charset.newDecoder()
-                    .onMalformedInput(CodingErrorAction.REPORT)
-                    .onUnmappableCharacter(CodingErrorAction.REPORT);
-                final MappedByteBuffer buf = channel.map(MapMode.READ_ONLY,
-                    window.getFileOffset(), window.getWindowLength());
-                return decoder.decode(buf);
-            }
-        };
-
-        return new FutureTask<>(callable);
     }
 
     /*
@@ -265,7 +243,7 @@ final class CharBufferCache
 
         while (!queue.isEmpty()) {
             waiter = queue.peek();
-            if (waiter.required > totalChars)
+            if (waiter.required > currentTotal)
                 break;
             queue.remove();
             waiter.wakeUp();
