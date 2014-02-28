@@ -41,7 +41,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static java.nio.channels.FileChannel.*;
 
-final class CharBufferCache
+final class TextFileDecoder
 {
     private static final MessageBundle BUNDLE
         = MessageBundles.getBundle(LargeTextMessages.class);
@@ -89,7 +89,7 @@ final class CharBufferCache
     private final long targetMapSize;
     private final long fileSize;
 
-    CharBufferCache(final FileChannel channel, final Charset charset,
+    TextFileDecoder(final FileChannel channel, final Charset charset,
         final long targetMapSize)
         throws IOException
     {
