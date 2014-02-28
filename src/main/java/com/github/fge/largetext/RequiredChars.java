@@ -23,41 +23,101 @@ import java.util.concurrent.CountDownLatch;
 /*
  * Inspired from http://stackoverflow.com/a/22055231/1093528
  */
-final class RequiredChars
+abstract class RequiredChars
     implements Comparable<RequiredChars>
 {
-    private final int required;
-    private final CountDownLatch latch = new CountDownLatch(1);
+    private static final RequiredChars SENTINEL = new RequiredChars()
+    {
+        @Override
+        int getRequired()
+        {
+            return Integer.MAX_VALUE;
+        }
+
+        @Override
+        void await()
+            throws InterruptedException
+        {
+        }
+
+        @Override
+        void wakeUp()
+        {
+        }
+
+        @Override
+        boolean isSentinel()
+        {
+            return true;
+        }
+
+        @Override
+        public int compareTo(final RequiredChars o)
+        {
+            return o.isSentinel() ? 0 : 1;
+        }
+    };
 
     static RequiredChars require(final int required)
     {
-        return new RequiredChars(required);
+        return new RequiredCharsImpl(required);
     }
 
-    private RequiredChars(final int required)
+    static RequiredChars sentinel()
     {
-        this.required = required;
+        return SENTINEL;
     }
 
-    int getRequired()
-    {
-        return required;
-    }
+    abstract int getRequired();
 
-    void await()
-        throws InterruptedException
-    {
-        latch.await();
-    }
+    abstract void await()
+        throws InterruptedException;
 
-    void wakeUp()
-    {
-        latch.countDown();
-    }
+    abstract void wakeUp();
 
-    @Override
-    public int compareTo(final RequiredChars o)
+    abstract boolean isSentinel();
+
+    private static final class RequiredCharsImpl
+        extends RequiredChars
     {
-        return Integer.compare(required, o.required);
+        private final int required;
+        private final CountDownLatch latch = new CountDownLatch(1);
+
+        private RequiredCharsImpl(final int required)
+        {
+            this.required = required;
+        }
+
+        @Override
+        int getRequired()
+        {
+            return required;
+        }
+
+        @Override
+        void await()
+            throws InterruptedException
+        {
+            latch.await();
+        }
+
+        @Override
+        void wakeUp()
+        {
+            latch.countDown();
+        }
+
+        @Override
+        boolean isSentinel()
+        {
+            return false;
+        }
+
+        @Override
+        public int compareTo(final RequiredChars o)
+        {
+            return o.isSentinel() ? -1
+                : Integer.compare(required, o.getRequired());
+        }
     }
 }
