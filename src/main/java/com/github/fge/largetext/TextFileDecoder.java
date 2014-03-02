@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import javax.annotation.concurrent.GuardedBy;
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
@@ -45,7 +46,8 @@ import java.util.concurrent.ThreadFactory;
 
 import static java.nio.channels.FileChannel.*;
 
-public final class TextFileDecoder
+final class TextFileDecoder
+    implements Closeable
 {
     private static final MessageBundle BUNDLE
         = MessageBundles.getBundle(LargeTextMessages.class);
@@ -125,6 +127,13 @@ public final class TextFileDecoder
         }
 
         return ImmutableList.copyOf(list);
+    }
+
+    @Override
+    public void close()
+        throws IOException
+    {
+        executor.shutdown();
     }
 
     private void needChars(final int needed)
