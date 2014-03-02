@@ -20,6 +20,7 @@ package com.github.fge.largetext;
 
 import com.github.fge.msgsimple.bundle.MessageBundle;
 import com.github.fge.msgsimple.load.MessageBundles;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import javax.annotation.concurrent.GuardedBy;
 import java.io.IOException;
@@ -30,103 +31,73 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static java.nio.channels.FileChannel.*;
 
-final class TextFileDecoder
+public final class TextFileDecoder
 {
     private static final MessageBundle BUNDLE
         = MessageBundles.getBundle(LargeTextMessages.class);
-    /*
-     * Use daemon threads. We don't give control to the user about the
-     * ExecutorService, and we don't have a reliable way to shut it down (a JVM
-     * shutdown hook does not get involved on a webapp shutdown, so we cannot
-     * use that...).
-     */
-    private static final ThreadFactory THREAD_FACTORY = new ThreadFactory()
-    {
-        private final ThreadFactory factory = Executors.defaultThreadFactory();
 
-        @Override
-        public Thread newThread(final Runnable r)
-        {
-            final Thread ret = factory.newThread(r);
-            ret.setDaemon(true);
-            return ret;
-        }
-    };
+    private static final ThreadFactory THREAD_FACTORY
+        = new ThreadFactoryBuilder().setDaemon(true).build();
 
     private final ExecutorService executor
         = Executors.newFixedThreadPool(2, THREAD_FACTORY);
 
-    // FIXME: make the two variables below volatile instead?
-    @GuardedBy("lock")
-    private volatile int totalChars = 0;
-    @GuardedBy("lock")
-    private volatile boolean finished = false;
-    @GuardedBy("lock")
-    private volatile IOException exception = null;
+    @GuardedBy("this")
+    private final DecodingStatus status = new DecodingStatus();
 
-    @GuardedBy("lock")
-    private final PriorityQueue<RequiredChars> queue
-        = new PriorityQueue<>();
+    private final List<CharWindow> windows = new CopyOnWriteArrayList<>();
 
-    @GuardedBy("lock")
-    private final List<CharWindow> windows = new ArrayList<>();
-
-    private final Lock lock = new ReentrantLock();
+    @GuardedBy("status")
+    private final Queue<RequiredChars> queue = new PriorityQueue<>();
 
     private final FileChannel channel;
     private final Charset charset;
-    private final long targetMapSize;
     private final long fileSize;
+    private final long targetMapSize = 1L << 20;
 
-    TextFileDecoder(final FileChannel channel, final Charset charset,
-        final long targetMapSize)
+    public TextFileDecoder(final FileChannel channel, final Charset charset)
         throws IOException
     {
         this.channel = channel;
-        this.charset = charset;
-        this.targetMapSize = targetMapSize;
         fileSize = channel.size();
+        this.charset = charset;
     }
 
-
-    void needChars(final int required)
-        throws IOException
+    void needChars(final int needed)
     {
-        RequiredChars waiter = null;
+        final RequiredChars requiredChars;
 
-        lock.lock();
-        try {
-            if (exception != null)
-                throw exception;
-            final int currentTotal = totalChars;
-            if (required > currentTotal) {
-                if (finished)
-                    throw new IndexOutOfBoundsException();
-                waiter = RequiredChars.require(required);
-                queue.add(waiter);
+        synchronized (status) {
+            if (status.finished) {
+                if (status.exception != null)
+                    throw new RuntimeException(status.exception);
+                if (needed > status.nrChars)
+                    throw new ArrayIndexOutOfBoundsException();
+                return;
             }
-        } finally {
-            lock.unlock();
+            if (needed <= status.nrChars)
+                return;
+            requiredChars = RequiredChars.require(needed);
+            queue.add(requiredChars);
         }
 
-        if (waiter != null)
-            try {
-                waiter.await();
-            } catch (InterruptedException ignored) {
-                Thread.currentThread().interrupt();
-            }
+        try {
+            requiredChars.await();
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        }
     }
+
 
     private void fillWindows()
     {
@@ -152,24 +123,31 @@ final class TextFileDecoder
                 caught = e;
                 break;
             }
-            lock.lock();
-            try {
-                windows.add(window);
-                charOffset += window.getCharLength();
-                totalChars = charOffset;
-                fileOffset += windowLength;
-                dequeueWaiters(charOffset);
-            }   finally {
-                lock.unlock();
+            windows.add(window);
+            fileOffset += windowLength;
+            charOffset += window.getCharLength();
+            synchronized (status) {
+                status.nrChars = charOffset;
+                dequeueUntil(charOffset);
             }
         }
 
-        lock.lock();
-        try {
-            exception = caught;
-            finished = true;
-        } finally {
-            lock.unlock();
+        synchronized (status) {
+            status.finished = true;
+            status.exception = caught;
+            queue.clear();
+        }
+    }
+
+    private void dequeueUntil(final int nrChars)
+    {
+        RequiredChars requiredChars;
+
+        while (!queue.isEmpty()) {
+            requiredChars = queue.peek();
+            if (requiredChars.getRequired() > nrChars)
+                return;
+            queue.remove().wakeUp();
         }
     }
 
@@ -202,17 +180,11 @@ final class TextFileDecoder
         return new CharWindow(fileOffset, mapSize, charOffset, buf.position());
     }
 
-    @GuardedBy("lock")
-    private void dequeueWaiters(final int currentTotal)
-    {
-        RequiredChars waiter;
 
-        while (!queue.isEmpty()) {
-            waiter = queue.peek();
-            if (waiter.getRequired() > currentTotal)
-                break;
-            queue.remove();
-            waiter.wakeUp();
-        }
+    private static final class DecodingStatus
+    {
+        private boolean finished = false;
+        private int nrChars = 0;
+        private IOException exception = null;
     }
 }
