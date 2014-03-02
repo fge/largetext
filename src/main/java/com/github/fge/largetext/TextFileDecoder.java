@@ -20,6 +20,7 @@ package com.github.fge.largetext;
 
 import com.github.fge.msgsimple.bundle.MessageBundle;
 import com.github.fge.msgsimple.load.MessageBundles;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import javax.annotation.concurrent.GuardedBy;
@@ -31,6 +32,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
@@ -50,7 +54,7 @@ public final class TextFileDecoder
         = new ThreadFactoryBuilder().setDaemon(true).build();
 
     private final ExecutorService executor
-        = Executors.newFixedThreadPool(2, THREAD_FACTORY);
+        = Executors.newSingleThreadExecutor(THREAD_FACTORY);
 
     @GuardedBy("this")
     private final DecodingStatus status = new DecodingStatus();
@@ -63,17 +67,67 @@ public final class TextFileDecoder
     private final FileChannel channel;
     private final Charset charset;
     private final long fileSize;
-    private final long targetMapSize = 1L << 20;
+    private final long targetMapSize;
 
-    public TextFileDecoder(final FileChannel channel, final Charset charset)
+    TextFileDecoder(final FileChannel channel, final Charset charset,
+        final long targetMapSize)
         throws IOException
     {
         this.channel = channel;
         fileSize = channel.size();
+        this.targetMapSize = targetMapSize;
         this.charset = charset;
+        executor.submit(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                fillWindows();
+            }
+        });
     }
 
-    void needChars(final int needed)
+    CharWindow getWindow(final int charOffset)
+    {
+        needChars(charOffset + 1);
+        for (final CharWindow window: windows)
+            if (window.containsCharAtIndex(charOffset))
+                return window;
+
+        throw new IllegalStateException();
+    }
+
+    // end is exclusive here
+    Collection<CharWindow> getWindowRange(final int start, final int end)
+    {
+        needChars(end);
+        final List<CharWindow> list = new ArrayList<>();
+        final Iterator<CharWindow> iterator = windows.iterator();
+
+        CharWindow window = null;
+
+        while (iterator.hasNext()) {
+            final CharWindow currentWindow = iterator.next();
+            if (currentWindow.containsCharAtIndex(start)) {
+                window = currentWindow;
+                break;
+            }
+        }
+
+        if (window == null)
+            throw new RuntimeException("WTF??");
+
+        list.add(window);
+
+        while (!window.containsCharAtIndex(end - 1)) {
+            window = iterator.next();
+            list.add(window);
+        }
+
+        return ImmutableList.copyOf(list);
+    }
+
+    private void needChars(final int needed)
     {
         final RequiredChars requiredChars;
 
@@ -97,7 +151,6 @@ public final class TextFileDecoder
             Thread.currentThread().interrupt();
         }
     }
-
 
     private void fillWindows()
     {
