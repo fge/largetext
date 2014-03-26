@@ -27,17 +27,22 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import static org.testng.Assert.*;
 
@@ -177,5 +182,30 @@ public final class LargeTextFileTest
         }
 
         return ret;
+    }
+
+    public static void main(final String... args)
+        throws IOException
+    {
+        final Map<String, ?> env = Collections.emptyMap();
+        final String jarName = "/opt/sunjdk/1.6/current/jre/lib/plugin.jar";
+        final URI uri = URI.create("jar:file:" + jarName);
+        final FileSystem fs = FileSystems.newFileSystem(uri, env);
+        final Path dir = fs.getPath("/");
+        for (Path entry : Files.newDirectoryStream(dir)) {
+            System.out.println(entry);
+        }
+    }
+
+    private static double bin5(final byte[] b, final int k)
+    {
+        final ByteBuffer buf = ByteBuffer.allocate(8);
+        buf.position(3);
+        buf.put(b, k, 5);
+//        buf.rewind();
+//        final long l = buf.getLong();
+//        return (double) l / 65536.0;
+        buf.position(2);
+        return (double) buf.getInt();
     }
 }

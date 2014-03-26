@@ -28,6 +28,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -61,6 +62,15 @@ final class CharBufferLoader
             return cache.get(window);
         } catch (ExecutionException e) {
             throw (IOException) e.getCause();
+        }
+    }
+
+    Map<CharWindow, CharBuffer> loadAll(final Iterable<CharWindow> iterable)
+    {
+        try {
+            return cache.getAll(iterable);
+        } catch (ExecutionException e) {
+            throw new RuntimeException("Unhandled exception", e.getCause());
         }
     }
 

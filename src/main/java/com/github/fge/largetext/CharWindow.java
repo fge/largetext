@@ -21,10 +21,13 @@ package com.github.fge.largetext;
 import com.github.fge.msgsimple.bundle.MessageBundle;
 import com.github.fge.msgsimple.load.MessageBundles;
 
+import javax.annotation.Nonnull;
+
 /**
  * One window within a text file
  */
-public final class CharWindow
+final class CharWindow
+    implements Comparable<CharWindow>
 {
     private static final MessageBundle BUNDLE
         = MessageBundles.getBundle(LargeTextMessages.class);
@@ -100,5 +103,11 @@ public final class CharWindow
 
         return new CharWindow(fileOffset, windowLength + other.windowLength,
             charOffset, charLength + other.charLength);
+    }
+
+    @Override
+    public int compareTo(@Nonnull final CharWindow o)
+    {
+        return Integer.compare(charOffset, o.charOffset);
     }
 }
