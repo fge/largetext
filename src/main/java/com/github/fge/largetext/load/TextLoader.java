@@ -16,12 +16,14 @@
  * - ASL 2.0: http://www.apache.org/licenses/LICENSE-2.0.txt
  */
 
-package com.github.fge.largetext;
+package com.github.fge.largetext.load;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Range;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
@@ -34,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.nio.channels.FileChannel.*;
 
-final class CharBufferLoader
+public final class TextLoader
 {
     private final FileChannel channel;
     private final Charset charset;
@@ -44,28 +46,29 @@ final class CharBufferLoader
      *
      * TODO: implement our own cache for this purpose?
      */
-    private final LoadingCache<CharWindow, CharBuffer> cache;
+    private final LoadingCache<TextRange, CharBuffer> cache;
 
-    CharBufferLoader(final FileChannel channel, final Charset charset)
+    public TextLoader(final FileChannel channel, final Charset charset)
     {
         this.channel = channel;
         this.charset = charset;
-        cache = CacheBuilder.<CharWindow, CharBuffer>newBuilder()
+        cache = CacheBuilder.<TextRange, CharBuffer>newBuilder()
             .expireAfterAccess(30L, TimeUnit.SECONDS)
             .build(loader());
     }
 
-    CharBuffer load(final CharWindow window)
+    public CharBuffer load(final TextRange textRange)
         throws IOException
     {
         try {
-            return cache.get(window);
+            return cache.get(textRange);
         } catch (ExecutionException e) {
             throw (IOException) e.getCause();
         }
     }
 
-    Map<CharWindow, CharBuffer> loadAll(final Iterable<CharWindow> iterable)
+    public Map<TextRange, CharBuffer> loadAll(
+        final Iterable<TextRange> iterable)
     {
         try {
             return cache.getAll(iterable);
@@ -74,16 +77,17 @@ final class CharBufferLoader
         }
     }
 
-    private CacheLoader<CharWindow, CharBuffer> loader()
+    private CacheLoader<TextRange, CharBuffer> loader()
     {
-        return new CacheLoader<CharWindow, CharBuffer>()
+        return new CacheLoader<TextRange, CharBuffer>()
         {
             @Override
-            public CharBuffer load(final CharWindow key)
+            public CharBuffer load(@Nonnull final TextRange key)
                 throws IOException
             {
+                final Range<Long> byteRange = key.getByteRange();
                 final MappedByteBuffer buffer = channel.map(MapMode.READ_ONLY,
-                    key.getFileOffset(), key.getWindowLength());
+                    byteRange.lowerEndpoint(), byteRange.upperEndpoint());
                 final CharsetDecoder decoder = charset.newDecoder();
                 return decoder.decode(buffer);
             }
