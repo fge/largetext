@@ -100,3 +100,8 @@ the file by mapping the required zone from the file and decoding it using a `Cha
 
 The default expiry policy (not configurable at this moment) is 30 seconds after last access.
 
+## Limitations
+
+The limitations are that of `CharSequence` (which is reflected in all their implementations): if you
+have more than `Integer.MAX_VALUE` characters in your file, you cannot use this class reliably!
+
