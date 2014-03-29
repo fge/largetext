@@ -20,6 +20,14 @@ package com.github.fge.largetext.factory;
 
 public enum SizeUnit
 {
+    B
+    {
+        @Override
+        public long sizeInBytes(final int quantity)
+        {
+            return (long) quantity;
+        }
+    },
     KiB
     {
         @Override

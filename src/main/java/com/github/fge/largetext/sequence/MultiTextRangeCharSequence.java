@@ -65,7 +65,7 @@ public final class MultiTextRangeCharSequence
             sb.append(buffer);
 
         final int start = lowerBound - first.lowerEndpoint();
-        final int end = last.upperEndpoint() - lowerBound;
+        final int end = range.upperEndpoint() - first.lowerEndpoint();
         return sb.subSequence(start, end).toString();
     }
 

@@ -87,12 +87,12 @@ public final class LargeText
     {
         final LargeTextFactory factory = LargeTextFactory.newBuilder()
             .setCharset(StandardCharsets.UTF_8)
-            .setWindowSize(256, SizeUnit.KiB)
+            .setWindowSize(16, SizeUnit.B)
             .build();
 
         final Path path = Paths.get("/usr/share/dict/words");
         final LargeText largeText = factory.fromPath(path);
-        final Pattern pattern = Pattern.compile("^[A-Z]\\p{Alnum}+$",
+        final Pattern pattern = Pattern.compile("^[A-Z][\\p{Alnum}]+$",
             Pattern.MULTILINE);
 
         final Matcher matcher = pattern.matcher(largeText);
