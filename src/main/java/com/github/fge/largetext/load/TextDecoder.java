@@ -18,9 +18,6 @@
 
 package com.github.fge.largetext.load;
 
-import com.github.fge.largetext.LargeTextMessages;
-import com.github.fge.msgsimple.bundle.MessageBundle;
-import com.github.fge.msgsimple.load.MessageBundles;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
@@ -48,9 +45,6 @@ import static java.nio.channels.FileChannel.*;
 public final class TextDecoder
     implements Closeable
 {
-    private static final MessageBundle BUNDLE
-        = MessageBundles.getBundle(LargeTextMessages.class);
-
     private static final ThreadFactory THREAD_FACTORY
         = new ThreadFactoryBuilder().setDaemon(true).build();
 
@@ -102,8 +96,8 @@ public final class TextDecoder
                         range = nextRange(byteOffset, charOffset, decoder,
                             charMap);
                         if (range.getByteRange().isEmpty())
-                            throw new IOException(
-                                BUNDLE.printf("err.invalidData", byteOffset));
+                            throw new IOException("unable to read file as text "
+                                + "starting from byte offset " + byteOffset);
                     } catch (IOException e) {
                         status.setFailed(e);
                         break;

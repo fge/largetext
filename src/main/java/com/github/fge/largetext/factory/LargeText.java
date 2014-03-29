@@ -92,7 +92,7 @@ public final class LargeText
 
         final Path path = Paths.get("/usr/share/dict/words");
         final LargeText largeText = factory.fromPath(path);
-        final Pattern pattern = Pattern.compile("^[A-Z][\\p{Alnum}]+$",
+        final Pattern pattern = Pattern.compile("^(?![a-zA-Z]+).+$",
             Pattern.MULTILINE);
 
         final Matcher matcher = pattern.matcher(largeText);
