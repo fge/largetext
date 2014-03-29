@@ -54,7 +54,7 @@ public final class TextLoader
         this.charset = charset;
         cache = CacheBuilder.<TextRange, CharBuffer>newBuilder()
             .expireAfterAccess(30L, TimeUnit.SECONDS)
-            .build(loader());
+            .recordStats().build(loader());
     }
 
     public CharBuffer load(final TextRange textRange)
@@ -92,5 +92,11 @@ public final class TextLoader
                 return decoder.decode(buffer);
             }
         };
+    }
+
+    @Override
+    public String toString()
+    {
+        return cache.stats().toString();
     }
 }

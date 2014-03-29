@@ -76,4 +76,10 @@ public final class CharWaiter
     {
         return Integer.compare(required, o.required);
     }
+
+    @Override
+    public String toString()
+    {
+        return "waiting for " + required + " character(s)";
+    }
 }

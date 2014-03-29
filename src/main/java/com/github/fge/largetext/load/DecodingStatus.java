@@ -84,4 +84,13 @@ public final class DecodingStatus
             waiter.wakeUp();
         }
     }
+
+    @Override
+    public String toString()
+    {
+        if (exception != null)
+            return "decoding error after reading " + nrChars + " character(s)";
+        return "currently decoded: " + nrChars + " character(s); finished: "
+            + finished;
+    }
 }

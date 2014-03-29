@@ -77,10 +77,10 @@ final class TextDecoder
         fileSize = channel.size();
         this.targetMapSize = targetMapSize;
         this.charset = charset;
-        executor.submit(getTask());
+        executor.submit(decodingTask());
     }
 
-    private Runnable getTask()
+    private Runnable decodingTask()
     {
         return new Runnable()
         {
