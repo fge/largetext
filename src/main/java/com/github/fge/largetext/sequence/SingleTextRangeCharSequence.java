@@ -42,4 +42,12 @@ public final class SingleTextRangeCharSequence
     {
         return buffer.charAt(realIndex - bufferRange.lowerEndpoint());
     }
+
+    @Override
+    public String toString()
+    {
+        final int start = range.lowerEndpoint() - bufferRange.lowerEndpoint();
+        final int end = range.upperEndpoint() - bufferRange.lowerEndpoint();
+        return buffer.subSequence(start, end).toString();
+    }
 }

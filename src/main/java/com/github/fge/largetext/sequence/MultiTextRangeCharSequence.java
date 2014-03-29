@@ -22,6 +22,8 @@ import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 
 import java.nio.CharBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -47,4 +49,24 @@ public final class MultiTextRangeCharSequence
         final int offset = entry.getKey().lowerEndpoint();
         return entry.getValue().charAt(realIndex - offset);
     }
+
+    @Override
+    public String toString()
+    {
+        final Map<Range<Integer>, CharBuffer> map = rangeMap.asMapOfRanges();
+        final List<Map.Entry<Range<Integer>, CharBuffer>> list
+            = new ArrayList<>(map.entrySet());
+        final Range<Integer> first = list.get(0).getKey();
+        final Range<Integer> last = list.get(list.size() - 1).getKey();
+        final StringBuilder sb
+            = new StringBuilder(last.upperEndpoint() - first.lowerEndpoint());
+
+        for (final CharBuffer buffer: map.values())
+            sb.append(buffer);
+
+        final int start = lowerBound - first.lowerEndpoint();
+        final int end = last.upperEndpoint() - lowerBound;
+        return sb.subSequence(start, end).toString();
+    }
+
 }

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.concurrent.CountDownLatch;
 
 @ThreadSafe
 public final class DecodingStatus
@@ -32,6 +33,7 @@ public final class DecodingStatus
     private int nrChars = -1;
     private IOException exception = null;
     private final Queue<CharWaiter> waiters = new PriorityQueue<>();
+    private final CountDownLatch endLatch = new CountDownLatch(1);
 
     public synchronized boolean addWaiter(final CharWaiter waiter)
     {
@@ -71,6 +73,7 @@ public final class DecodingStatus
             waiter.setException(exception);
             waiter.wakeUp();
         }
+        endLatch.countDown();
     }
 
     public synchronized void setFinished(final int nrChars)
@@ -83,10 +86,23 @@ public final class DecodingStatus
             waiter.setNrChars(nrChars);
             waiter.wakeUp();
         }
+        endLatch.countDown();
+    }
+
+    public int getTotalSize()
+    {
+        try {
+            endLatch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("interrupted", e);
+        }
+        if (exception != null)
+            throw new RuntimeException("decoding error", exception);
+        return nrChars;
     }
 
     @Override
-    public String toString()
+    public synchronized String toString()
     {
         if (exception != null)
             return "decoding error after reading " + nrChars + " character(s)";

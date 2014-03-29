@@ -67,6 +67,8 @@ public final class TextDecoder
     private final long fileSize;
     private final long targetMapSize;
 
+    private int totalChars;
+
     public TextDecoder(final FileChannel channel, final Charset charset,
         final long targetMapSize)
         throws IOException
@@ -145,6 +147,11 @@ public final class TextDecoder
             ret = ranges.subRangeMap(range).asMapOfRanges().values();
         }
         return ImmutableList.copyOf(ret);
+    }
+
+    public int getTotalChars()
+    {
+        return status.getTotalSize();
     }
 
     @Override

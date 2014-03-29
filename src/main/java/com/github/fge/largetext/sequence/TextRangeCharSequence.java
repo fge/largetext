@@ -66,4 +66,7 @@ public abstract class TextRangeCharSequence
     }
 
     protected abstract char doCharAt(final int realIndex);
+
+    @Override
+    public abstract String toString();
 }

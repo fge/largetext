@@ -81,8 +81,10 @@ public final class TextLoader
                 throws IOException
             {
                 final Range<Long> byteRange = key.getByteRange();
+                final long start = byteRange.lowerEndpoint();
+                final long size = byteRange.upperEndpoint() - start;
                 final MappedByteBuffer buffer = channel.map(MapMode.READ_ONLY,
-                    byteRange.lowerEndpoint(), byteRange.upperEndpoint());
+                    start, size);
                 final CharsetDecoder decoder = charset.newDecoder();
                 return decoder.decode(buffer);
             }

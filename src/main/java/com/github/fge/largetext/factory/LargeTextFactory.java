@@ -19,8 +19,12 @@
 package com.github.fge.largetext.factory;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 
 public final class LargeTextFactory
@@ -44,6 +48,14 @@ public final class LargeTextFactory
         charset = builder.charset;
         sizeUnit = builder.sizeUnit;
         quantity = builder.quantity;
+    }
+
+    public LargeText fromPath(final Path path)
+        throws IOException
+    {
+        final FileChannel channel = FileChannel.open(path,
+            StandardOpenOption.READ);
+        return new LargeText(channel, charset, quantity, sizeUnit);
     }
 
     public static final class Builder
