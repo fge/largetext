@@ -23,6 +23,19 @@ import com.google.common.collect.Range;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 
+/**
+ * A range of text within a text file
+ *
+ * <p>This class embeds two ranges: the range of bytes within the file and the
+ * matching range of characters.</p>
+ *
+ * <p>Ranges are <strong>absolute</strong>. They are closed on the lower bound
+ * (ie, they include the lower bound) but open on the upper bould (ie, they
+ * <em>exclude</em> the upper bound).</p>
+ *
+ * @see TextDecoder
+ * @see Range#closedOpen(Comparable, Comparable)
+ */
 @Immutable
 public final class TextRange
     implements Comparable<TextRange>
@@ -37,11 +50,21 @@ public final class TextRange
         charRange = Range.closedOpen(charOffset, charOffset + nrChars);
     }
 
+    /**
+     * Return the (absolute) character range corresponding to that text range
+     *
+     * @return the range, as a {@link Range}
+     */
     public Range<Integer> getCharRange()
     {
         return charRange;
     }
 
+    /**
+     * Return the (absolute) file mapping range corresponding to that text range
+     *
+     * @return the range, as a {@link Range}
+     */
     public Range<Long> getByteRange()
     {
         return byteRange;

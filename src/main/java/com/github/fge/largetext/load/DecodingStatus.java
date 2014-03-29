@@ -26,8 +26,22 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 
+/**
+ * The watchdog class for a text decoding operation
+ *
+ * <p>This class takes care of {@link CharWaiter}s and callers to {@link
+ * TextDecoder#getTotalChars()}.</p>
+ *
+ * <p>The decoding process in {@link TextDecoder} will update the internal
+ * status of this object when the decoding operation makes progress; on an
+ * update, this class will wake up the relevant waiters.</p>
+ *
+ * <p>In the event of an error, all waiters are woken up.</p>
+ *
+ * @see CharWaiter
+ */
 @ThreadSafe
-public final class DecodingStatus
+final class DecodingStatus
 {
     private boolean finished = false;
     private int nrChars = -1;
@@ -35,7 +49,7 @@ public final class DecodingStatus
     private final Queue<CharWaiter> waiters = new PriorityQueue<>();
     private final CountDownLatch endLatch = new CountDownLatch(1);
 
-    public synchronized boolean addWaiter(final CharWaiter waiter)
+    synchronized boolean addWaiter(final CharWaiter waiter)
     {
         if (exception != null)
             throw new RuntimeException("decoding error", exception);
@@ -51,7 +65,7 @@ public final class DecodingStatus
         return false;
     }
 
-    public synchronized void setNrChars(final int nrChars)
+    synchronized void setNrChars(final int nrChars)
     {
         this.nrChars = nrChars;
         CharWaiter waiter;
@@ -64,7 +78,7 @@ public final class DecodingStatus
         }
     }
 
-    public synchronized void setFailed(final IOException exception)
+    synchronized void setFailed(final IOException exception)
     {
         this.exception = exception;
         final List<CharWaiter> list = new ArrayList<>(waiters);
@@ -76,7 +90,7 @@ public final class DecodingStatus
         endLatch.countDown();
     }
 
-    public synchronized void setFinished(final int nrChars)
+    synchronized void setFinished(final int nrChars)
     {
         finished = true;
         this.nrChars = nrChars;
@@ -89,7 +103,7 @@ public final class DecodingStatus
         endLatch.countDown();
     }
 
-    public int getTotalSize()
+    int getTotalSize()
     {
         try {
             endLatch.await();

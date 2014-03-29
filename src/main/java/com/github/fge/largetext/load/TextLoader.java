@@ -24,7 +24,9 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Range;
 
 import javax.annotation.Nonnull;
+import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
+import java.lang.Iterable;
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -36,6 +38,19 @@ import java.util.concurrent.TimeUnit;
 
 import static java.nio.channels.FileChannel.*;
 
+/**
+ * A thread-safe, concurrent-friendly loader of {@link CharBuffer}s from a large
+ * text file
+ *
+ * <p>This class will load character sequences from a large text file as
+ * described by {@link TextRange} instances (which are produced by a {@link
+ * TextLoader} instance).</p>
+ *
+ * <p>This uses Guava's {@link LoadingCache} to do the job. The default expiry
+ * policy (not configurable at the moment) is to expire entries 30 seconds after
+ * they were last accessed.</p>
+ */
+@ThreadSafe
 public final class TextLoader
 {
     private final FileChannel channel;
@@ -57,16 +72,36 @@ public final class TextLoader
             .recordStats().build(loader());
     }
 
+    /**
+     * Load one buffer matching a {@link TextRange}
+     *
+     * <p>Note that it calls {@link LoadingCache#getUnchecked(Object)};
+     * therefore all loading failures will throw an <em>unchecked</em>
+     * exception.</p>
+     *
+     * @param textRange the text range
+     * @return the matching {@link CharBuffer}
+     */
     public CharBuffer load(final TextRange textRange)
     {
         return cache.getUnchecked(textRange);
     }
 
-    public Map<TextRange, CharBuffer> loadAll(
-        final Iterable<TextRange> iterable)
+
+    /**
+     * Return a map of buffers from a series of text ranges
+     *
+     * <p>The map entries will be ordered the same way as ranges appear in the
+     * supplied {@link Iterable}. Keys of the map will be ranges and values will
+     * be the loaded {@link CharBuffer}s.</p>
+     *
+     * @param ranges the iterable of ranges
+     * @return the matching map
+     */
+    public Map<TextRange, CharBuffer> loadAll(final Iterable<TextRange> ranges)
     {
         try {
-            return cache.getAll(iterable);
+            return cache.getAll(ranges);
         } catch (ExecutionException e) {
             throw new RuntimeException("Unhandled exception", e.getCause());
         }

@@ -20,12 +20,28 @@ package com.github.fge.largetext.load;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.lang.Comparable;
+import java.lang.RuntimeException;
+import java.util.PriorityQueue;
 import java.util.concurrent.CountDownLatch;
 
-/*
- * Inspired from http://stackoverflow.com/a/22055231/1093528
+/**
+ * A waiter on a number of available characters in a {@link TextDecoder}
+ *
+ * <p>When it is woken up, it will check for the status of the operation; it
+ * will throw a {@link RuntimeException} if the decoding operation fails, or it
+ * has waited to more characters than what is actually available.</p>
+ *
+ * <p>It implements {@link Comparable} since instances of this class are used in
+ * a {@link PriorityQueue}.</p>
+ *
+ * <p>Inspired from <a href="http://stackoverflow.com/a/22055231/1093528">this
+ * StackOverflow answer</a>.</p>
+ *
+ * @see DecodingStatus
+ * @see TextDecoder#needChars(int)
  */
-public final class CharWaiter
+final class CharWaiter
     implements Comparable<CharWaiter>
 {
     private final int required;
@@ -34,29 +50,29 @@ public final class CharWaiter
     private int nrChars = 0;
     private IOException exception = null;
 
-    public CharWaiter(final int required)
+    CharWaiter(final int required)
     {
         if (required < 0)
             throw new ArrayIndexOutOfBoundsException(required);
         this.required = required;
     }
 
-    public void setNrChars(final int nrChars)
+    void setNrChars(final int nrChars)
     {
         this.nrChars = nrChars;
     }
 
-    public void setException(final IOException exception)
+    void setException(final IOException exception)
     {
         this.exception = exception;
     }
 
-    public int getRequired()
+    int getRequired()
     {
         return required;
     }
 
-    public void await()
+    void await()
         throws InterruptedException
     {
         latch.await();
@@ -66,7 +82,7 @@ public final class CharWaiter
             throw new ArrayIndexOutOfBoundsException(required);
     }
 
-    public void wakeUp()
+    void wakeUp()
     {
         latch.countDown();
     }
