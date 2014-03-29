@@ -16,7 +16,7 @@
  * - ASL 2.0: http://www.apache.org/licenses/LICENSE-2.0.txt
  */
 
-package com.github.fge.largetext.factory;
+package com.github.fge.largetext;
 
 import com.github.fge.largetext.load.TextDecoder;
 import com.github.fge.largetext.load.TextLoader;

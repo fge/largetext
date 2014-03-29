@@ -16,8 +16,10 @@
  * - ASL 2.0: http://www.apache.org/licenses/LICENSE-2.0.txt
  */
 
-package com.github.fge.largetext.factory;
+package com.github.fge.largetext;
 
+import com.github.fge.largetext.LargeTextFactory;
+import com.github.fge.largetext.SizeUnit;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
