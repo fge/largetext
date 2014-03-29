@@ -29,7 +29,7 @@ import java.util.Queue;
 public final class DecodingStatus
 {
     private boolean finished = false;
-    private int nrChars = 0;
+    private int nrChars = -1;
     private IOException exception = null;
     private final Queue<CharWaiter> waiters = new PriorityQueue<>();
 

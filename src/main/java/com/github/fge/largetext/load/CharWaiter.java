@@ -36,6 +36,8 @@ public final class CharWaiter
 
     public CharWaiter(final int required)
     {
+        if (required < 0)
+            throw new ArrayIndexOutOfBoundsException(required);
         this.required = required;
     }
 
