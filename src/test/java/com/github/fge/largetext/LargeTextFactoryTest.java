@@ -18,8 +18,6 @@
 
 package com.github.fge.largetext;
 
-import com.github.fge.largetext.LargeTextFactory;
-import com.github.fge.largetext.SizeUnit;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

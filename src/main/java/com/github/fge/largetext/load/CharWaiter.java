@@ -20,8 +20,6 @@ package com.github.fge.largetext.load;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.lang.Comparable;
-import java.lang.RuntimeException;
 import java.util.PriorityQueue;
 import java.util.concurrent.CountDownLatch;
 
