@@ -6,6 +6,9 @@ suggested to map a large text file to Java's
 since when you build a `Matcher` from a `Pattern`, the expected argument is a
 `CharSequence`.
 
+So there you are. This package does exactly that! You can now search huge text files with regexes
+(there are limitations however, see below).
+
 **NOTE: requires Java 7**
 
 ## Status
@@ -92,6 +95,9 @@ the caller can now obtain its result.
 
 If the process is interrupted for one reason or another, the interrupt status is restored and a
 `RuntimeException` is thrown.
+
+Note that it may happen that a byte window will not exactly map to a char window; the decoding
+process detects that and restarts from the appropriate offset in the file.
 
 ### `TextLoader`
 
