@@ -37,17 +37,15 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
 import static java.nio.channels.FileChannel.*;
 
-final class TextDecoder
+public final class TextDecoder
     implements Closeable
 {
     private static final MessageBundle BUNDLE
@@ -69,7 +67,7 @@ final class TextDecoder
     private final long fileSize;
     private final long targetMapSize;
 
-    TextDecoder(final FileChannel channel, final Charset charset,
+    public TextDecoder(final FileChannel channel, final Charset charset,
         final long targetMapSize)
         throws IOException
     {
@@ -134,18 +132,17 @@ final class TextDecoder
         }
     }
 
-    public Iterable<TextRange> getRanges(final int start, final int end)
+    public List<TextRange> getRanges(final Range<Integer> range)
     {
-        final Range<Integer> charRange = Range.closedOpen(start, end);
         try {
-            needChars(end);
+            needChars(range.upperEndpoint());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Interrupted", e);
         }
-        final Iterable<TextRange> ret;
+        final Collection<TextRange> ret;
         synchronized (ranges) {
-            ret = ranges.subRangeMap(charRange).asMapOfRanges().values();
+            ret = ranges.subRangeMap(range).asMapOfRanges().values();
         }
         return ImmutableList.copyOf(ret);
     }
@@ -192,16 +189,5 @@ final class TextDecoder
 
         return new TextRange(byteOffset, nrBytes, charOffset,
             charMap.position());
-    }
-
-    public static void main(final String... args)
-        throws IOException
-    {
-        final Path path = Paths.get("/usr/share/dict/words");
-        final FileChannel channel = FileChannel.open(path,
-            StandardOpenOption.READ);
-        final TextDecoder decoder = new TextDecoder(channel,
-            StandardCharsets.UTF_8, 20_000L);
-        System.out.println(decoder.getRange(298389));
     }
 }

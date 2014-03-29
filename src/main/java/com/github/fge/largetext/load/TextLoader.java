@@ -58,13 +58,8 @@ public final class TextLoader
     }
 
     public CharBuffer load(final TextRange textRange)
-        throws IOException
     {
-        try {
-            return cache.get(textRange);
-        } catch (ExecutionException e) {
-            throw (IOException) e.getCause();
-        }
+        return cache.getUnchecked(textRange);
     }
 
     public Map<TextRange, CharBuffer> loadAll(
