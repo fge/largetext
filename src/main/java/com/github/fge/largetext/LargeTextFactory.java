@@ -18,8 +18,12 @@
 
 package com.github.fge.largetext;
 
+import com.google.common.base.Preconditions;
+
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.lang.IllegalArgumentException;
+import java.lang.NullPointerException;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -27,17 +31,56 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 
+/**
+ * Factory to obtain {@link LargeText} instances
+ *
+ * <p>With this factory, you are able to specify two essential parameters:</p>
+ *
+ * <ul>
+ *     <li>which character encoding ({@link Charset}) to use when decoding the
+ *     file;</li>
+ *     <li>what window size to use when decoding.</li>
+ * </ul>
+ *
+ * <p>Sample usage:</p>
+ *
+ * <pre>
+ *     // Default factory
+ *     final LargeTextFactory factory = LargeTextFactory.defaultFactory();
+ *     // Custom factory: use UTF-16 LE for encoding and a 256 MiB window size
+ *     final LargeTextFactory factory = LargeTextFactory.newBuilder()
+ *         .setCharset(StandardCharsets.UTF_16LE)
+ *         .setWindowSize(256, SizeUnit.MiB);
+ * </pre>
+ *
+ * <p>The defaults are to use UTF-8 ({@link StandardCharsets#UTF_8}) as a
+ * character encoding, and a 2 MiB window size.</p>
+ *
+ * @see LargeTextFactory.Builder
+ * @see SizeUnit
+ * @see LargeText
+ */
 public final class LargeTextFactory
 {
     private final Charset charset;
     private final SizeUnit sizeUnit;
     private final int quantity;
 
+    /**
+     * Obtain a builder for a new factory
+     *
+     * @return a builder, with default values
+     */
     public static Builder newBuilder()
     {
         return new Builder();
     }
 
+    /**
+     * Obtain a factory with default values
+     *
+     * @return the factory
+     */
     public static LargeTextFactory defaultFactory()
     {
         return new Builder().build();
@@ -50,6 +93,16 @@ public final class LargeTextFactory
         quantity = builder.quantity;
     }
 
+    /**
+     * Obtain a {@link LargeText} instance from a given {@link Path}
+     *
+     * @param path the path to use
+     * @return the large text instance
+     * @throws IOException failed to open a (read only) {@link FileChannel} for
+     * the given path
+     *
+     * @see FileChannel#open(java.nio.file.Path, java.nio.file.OpenOption...)
+     */
     public LargeText fromPath(final Path path)
         throws IOException
     {
@@ -58,8 +111,12 @@ public final class LargeTextFactory
         return new LargeText(channel, charset, quantity, sizeUnit);
     }
 
+    /**
+     * A {@link com.github.fge.largetext.LargeTextFactory} builder
+     */
     public static final class Builder
     {
+        private static final long MIN_WINDOW_SIZE = 1024L;
         private static final long MAX_WINDOW_SIZE = (long) Integer.MAX_VALUE;
 
         private Charset charset = StandardCharsets.UTF_8;
@@ -70,6 +127,13 @@ public final class LargeTextFactory
         {
         }
 
+        /**
+         * Set the character encoding to use for this factory
+         *
+         * @param charset the charset
+         * @return this
+         * @throws NullPointerException charset is null
+         */
         public Builder setCharset(@Nonnull final Charset charset)
         {
             this.charset = Objects.requireNonNull(charset,
@@ -77,14 +141,35 @@ public final class LargeTextFactory
             return this;
         }
 
+        /**
+         * Set the character encoding to use for this factory, by name
+         *
+         * @param charsetByName the name of the {@link Charset}
+         * @return this
+         * @throws NullPointerException argument is null
+         *
+         * @see Charset#forName(String)
+         */
         public Builder setCharsetByName(@Nonnull final String charsetByName)
         {
             final Charset c = Charset.forName(charsetByName);
             return setCharset(c);
         }
 
+        /**
+         * Set the window size for this factory
+         *
+         * @param quantity the size unit quantity
+         * @param sizeUnit the size unit
+         * @return this
+         * @throws NullPointerException size unit is null
+         * @throws IllegalArgumentException window size is less than 1 KiB, or
+         * greater than or equal to 2 GiB
+         *
+         * @see SizeUnit
+         */
         public Builder setWindowSize(final int quantity,
-            final SizeUnit sizeUnit)
+            @Nonnull final SizeUnit sizeUnit)
         {
             if (quantity <= 0)
                 throw new IllegalArgumentException("window size must be " +
@@ -92,12 +177,19 @@ public final class LargeTextFactory
             this.quantity = quantity;
             this.sizeUnit = Objects.requireNonNull(sizeUnit,
                 "window size unit must not be null");
-            if (sizeUnit.sizeInBytes(quantity) > MAX_WINDOW_SIZE)
-                throw new IllegalArgumentException("window size cannot exceed" +
-                    " 2^31 - 1 bytes");
+            final long targetWindowSize = sizeUnit.sizeInBytes(quantity);
+            Preconditions.checkArgument(targetWindowSize >= MIN_WINDOW_SIZE,
+                "window size must be at least 1024 bytes");
+            Preconditions.checkArgument(targetWindowSize < MAX_WINDOW_SIZE,
+                "window size must be strictly lower than 2 GiB");
             return this;
         }
 
+        /**
+         * Build the factory
+         *
+         * @return a new factory
+         */
         public LargeTextFactory build()
         {
             return new LargeTextFactory(this);

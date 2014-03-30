@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright (c) 2014, Francis Galiegue (fgaliegue@gmail.com)
+  ~
+  ~ This software is dual-licensed under:
+  ~
+  ~ - the Lesser General Public License (LGPL) version 3.0 or, at your option, any
+  ~   later version;
+  ~ - the Apache Software License (ASL) version 2.0.
+  ~
+  ~ The text of both licenses is available under the src/resources/ directory of
+  ~ this project (under the names LGPL-3.0.txt and ASL-2.0.txt respectively).
+  ~
+  ~ Direct link to the sources:
+  ~
+  ~ - LGPL 3.0: https://www.gnu.org/licenses/lgpl-3.0.txt
+  ~ - ASL 2.0: http://www.apache.org/licenses/LICENSE-2.0.txt
+  -->
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>largetext: use regexes on large text files</title>
+</head>
+<body>
+<h1>largetext: use regexes on large text files seamlessly</h1>
+
+<h2>Why</h2>
+
+<p>This is a toy project, really; it stemmed from a <a
+href="http://stackoverflow.com/q/22017480/1093528" target="_blank">discussion
+on StackOverflow</a>, where the user wanted to search for a pattern within large
+text files.</p>
+
+<p>The suggested and accepted answer (mine) was to implement {@link
+java.lang.CharSequence} over such a large text file, since a {@link
+java.util.regex.Matcher} expects a <code>CharSequence</code> as an argument.</p>
+
+<p>And just for the heck of it, I decided to have a go at it, and this is the
+result! You can now use regexes over large text files (nearly) seamlessly.</p>
+
+<h2>Sample usage</h2>
+
+<pre>
+    // Default factory: UTF-8 character encoding, 2 MiB window size
+    final LargeTextFactory factory = LargeTextFactory.defaultFactory();
+    final Path fileToSearch = Paths.get("path/to/large/textfile.txt");
+    final Pattern pattern = Pattern.compile(...);
+
+    try (
+        final LargeText input = factory.fromPath(fileToSearch);
+    ) {
+        final Matcher m = pattern.matcher(input);
+        if (m.find())
+            System.out.println(fileToSearch + " has a match");
+    }
+</pre>
+
+<p>The first thing you need to do is create a {@link
+com.github.fge.largetext.LargeTextFactory}. You can customize two parameters for
+an individual factory:</p>
+
+<ul>
+    <li>which character encoding to use when decoding the file (in Java, that is
+    a {@link java.nio.charset.Charset});</li>
+    <li>the size of individual <em>byte</em> windows to use when performing the
+    decoding operation.</li>
+</ul>
+
+<p>The first option is of course essential, since Java cannot know in advance
+what character encoding your file uses. The second option allows you to
+customize the amount of memory used in the decoding process and during the
+lifetime of the <code>LargeText</code> instance.</p>
+
+<p>Note that due to inherent limitations of Java classes, you will not be
+allowed to create windows larger than 2^31 - 1 bytes (that is,
+<code>Integer.MAX_VALUE</code>); also, there is a lower limit of 1024 bytes per
+window.</p>
+
+<p>See the {@link com.github.fge.largetext.LargeTextFactory} documentation for
+customization options.</p>
+
+<h2>How it works internally</h2>
+
+<h3>Foreword: the <code>CharSequence</code> interface...</h3>
+
+<p>... Has no support for blocking operations; its contract does not account for
+failures in any of its defined methods, and with this package it is a real
+possibility...</p>
+
+<p>As a result, all exceptions thrown by this package when the decoding/loading
+operations fail are <em>unchecked</em>.</p>
+
+<h3>The decoding process</h3>
+
+<p>When you initiate a <code>LargeText</code> instance, a background thread will
+perform the decoding operation, window by window; the size of this window is
+determined by your <code>LargeTextFactory</code>.</p>
+
+<p>When you call any method of a <code>CharSequence</code> on a
+<code>LargeText</code> instance, the method will block until the required
+number of characters have been decoded; this will be all of them for
+<code>.length()</code>, the required offset for <code>.charAt()</code>,
+or the upper bound for <code>.subSequence()</code>.</p>
+
+<p>The decoding is performed using a {@link java.nio.charset.CharsetDecoder}.
+This decoder will attempt to decode one byte window into a suitable {@link
+java.nio.CharBuffer}. Each time a decoding operation completes successfully,
+all threads waiting for <code>n</code> characters where <code>n</code> is less
+than, or equal to, the number of successfully decoded characters at this point
+will be woken up.</p>
+
+<p>A dedicated waiter is produced for callers of the <code>.length()</code>
+method, shared between all callers, which will wait for the decoding operation
+to complete.</p>
+
+<p>In the event of a failure (either because of an I/O error, or because of an
+unmappable byte sequence) or an early thread interruption, an unchecked
+exception is thrown.</p>
+
+</body>
+</html>

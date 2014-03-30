@@ -29,12 +29,30 @@ import java.io.IOException;
 import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
+/**
+ * A large text file as a {@link CharSequence}
+ *
+ * <p>Do not create an instance of this class directly; instead, use a {@link
+ * LargeTextFactory}.</p>
+ *
+ * <p><strong>Important note!</strong> This class implements {@link Closeable}
+ * (and therefore {@link AutoCloseable}); the recommended use is therefore to
+ * use it in a try-with-resources statement:</p>
+ *
+ * <pre>
+ *     try (
+ *         final LargeText largeText = factory.fromPath(somePath);
+ *     ) {
+ *         // use "largeText" here
+ *     }
+ * </pre>
+ *
+ * <p>Failing to close the instance correctly means you leak a file descriptor
+ * to the text file you are using!</p>
+ *
+ * @see LargeTextFactory
+ */
 public final class LargeText
     implements CharSequence, Closeable
 {
@@ -43,6 +61,19 @@ public final class LargeText
     private final TextLoader loader;
     private final CharSequenceFactory factory;
 
+    /**
+     * Package local constructor
+     *
+     * <p>This constructor <strong>does not</strong> do any error checking on
+     * its argument; which is why you should really go through a {@link
+     * LargeTextFactory} instance instead!</p>
+     *
+     * @param channel the {@link FileChannel} to the (hopefully text) file
+     * @param charset the character encoding to use
+     * @param quantity the quantity of size units
+     * @param sizeUnit the size unit
+     * @throws IOException failed to build a decoder
+     */
     LargeText(final FileChannel channel, final Charset charset,
         final int quantity, final SizeUnit sizeUnit)
         throws IOException
@@ -54,6 +85,13 @@ public final class LargeText
         factory = new CharSequenceFactory(decoder, loader);
     }
 
+    /**
+     * Obtain this file's length in {@code char}s (NOT code points!)
+     *
+     * <p>What is does is call {@link TextDecoder#getTotalChars()}.</p>
+     *
+     * @return the number of `char`s in this file
+     */
     @Override
     public int length()
     {
@@ -74,34 +112,19 @@ public final class LargeText
         return factory.getSequence(Range.closedOpen(start, end));
     }
 
+    /**
+     * Close this instance
+     *
+     * <p>This closes the embedded {@link TextDecoder}, and then the {@link
+     * FileChannel} associated with the file.</p>
+     *
+     * @throws IOException
+     */
     @Override
     public void close()
         throws IOException
     {
         decoder.close();
         channel.close();
-    }
-
-    public static void main(final String... args)
-        throws IOException
-    {
-        final LargeTextFactory factory = LargeTextFactory.newBuilder()
-            .setCharset(StandardCharsets.UTF_8)
-            .setWindowSize(16, SizeUnit.B)
-            .build();
-
-        final Path path = Paths.get("/usr/share/dict/words");
-        final LargeText largeText = factory.fromPath(path);
-        final Pattern pattern = Pattern.compile("^(?![a-zA-Z]+).+$",
-            Pattern.MULTILINE);
-
-        final Matcher matcher = pattern.matcher(largeText);
-        int count = 0;
-
-        while (matcher.find()) {
-            System.out.println(matcher.group());
-            count++;
-        }
-        System.out.println(count + " matches total");
     }
 }

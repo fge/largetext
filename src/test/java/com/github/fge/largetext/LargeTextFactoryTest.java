@@ -74,8 +74,21 @@ public final class LargeTextFactoryTest
             builder.setWindowSize(20_000_000, SizeUnit.MiB);
             fail("No exception thrown!!");
         } catch (IllegalArgumentException e) {
-            assertEquals(e.getMessage(), "window size cannot exceed 2^31 - 1 " +
+            assertEquals(e.getMessage(), "window size must be strictly lower " +
+                "than 2 GiB");
+        }
+    }
+
+    @Test
+    public void windowSizeCannotBeLessThan1KiB()
+    {
+        try {
+            builder.setWindowSize(1023, SizeUnit.B);
+            fail("No exception thrown!!");
+        } catch (IllegalArgumentException e) {
+            assertEquals(e.getMessage(), "window size must be at least 1024 " +
                 "bytes");
         }
     }
+
 }
