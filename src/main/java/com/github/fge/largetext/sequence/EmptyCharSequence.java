@@ -18,6 +18,9 @@
 
 package com.github.fge.largetext.sequence;
 
+/**
+ * An empty (0-length) character sequence
+ */
 public enum EmptyCharSequence
     implements CharSequence
 {
@@ -32,14 +35,16 @@ public enum EmptyCharSequence
     @Override
     public char charAt(final int index)
     {
-        throw new ArrayIndexOutOfBoundsException();
+        throw new ArrayIndexOutOfBoundsException(index);
     }
 
     @Override
     public CharSequence subSequence(final int start, final int end)
     {
-        if (start != 0 && end != 0)
-            throw new ArrayIndexOutOfBoundsException();
+        if (start != 0)
+            throw new ArrayIndexOutOfBoundsException(start);
+        if (end != 0)
+            throw new ArrayIndexOutOfBoundsException(end);
         return this;
     }
 

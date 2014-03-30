@@ -18,16 +18,30 @@
 
 package com.github.fge.largetext.sequence;
 
+import com.github.fge.largetext.load.TextRange;
 import com.google.common.collect.Range;
 
 import java.nio.CharBuffer;
 
+/**
+ * A {@link CharSequence} spanning only one {@link TextRange}
+ *
+ * <p>Do not use directly!</p>
+ */
 public final class SingleTextRangeCharSequence
     extends TextRangeCharSequence
 {
     private final CharBuffer buffer;
     private final Range<Integer> bufferRange;
 
+    /**
+     * Constructor
+     *
+     * @param factory the factory to produce subsequences
+     * @param range the <em>absolute</em> requested range
+     * @param bufferRange the <em>absolute</em> range of the buffer
+     * @param buffer the character buffer matching this range
+     */
     public SingleTextRangeCharSequence(final CharSequenceFactory factory,
         final Range<Integer> range, final Range<Integer> bufferRange,
         final CharBuffer buffer)

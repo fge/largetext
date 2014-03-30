@@ -24,10 +24,14 @@ import com.github.fge.largetext.load.TextRange;
 import com.google.common.collect.ImmutableRangeMap;
 import com.google.common.collect.Range;
 
+import java.lang.CharSequence;
 import java.nio.CharBuffer;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Build subsequences from a text file
+ */
 public final class CharSequenceFactory
 {
     private final TextDecoder decoder;
@@ -40,8 +44,21 @@ public final class CharSequenceFactory
         this.loader = loader;
     }
 
-    public TextRangeCharSequence getSequence(final Range<Integer> range)
+    /**
+     * Get an appropriate character sequence for the requested range
+     *
+     * <p>Depending on the requested range and window size, this will return
+     * either a {@link SingleTextRangeCharSequence} or a {@link
+     * MultiTextRangeCharSequence}, or even {@link EmptyCharSequence#INSTANCE}
+     * if the requested range is empty.</p>
+     *
+     * @param range the range of characters
+     * @return the appropriate {@link CharSequence}
+     */
+    public CharSequence getSequence(final Range<Integer> range)
     {
+        if (range.isEmpty())
+            return EmptyCharSequence.INSTANCE;
         final List<TextRange> textRanges = decoder.getRanges(range);
         if (textRanges.size() == 1) {
             final TextRange textRange = textRanges.get(0);

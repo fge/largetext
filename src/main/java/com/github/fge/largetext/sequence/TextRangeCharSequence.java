@@ -18,8 +18,18 @@
 
 package com.github.fge.largetext.sequence;
 
+import com.github.fge.largetext.load.TextRange;
 import com.google.common.collect.Range;
 
+/**
+ * One {@link CharSequence} built out of one or more {@link TextRange}s
+ *
+ * <p>Such a character sequence will always "carry along" the {@link
+ * CharSequenceFactory} it has been created with, in order to be able to
+ * create {@link #subSequence(int, int) subsequences} of itself.</p>
+ *
+ * @see CharSequenceFactory
+ */
 public abstract class TextRangeCharSequence
     implements CharSequence
 {
@@ -27,6 +37,12 @@ public abstract class TextRangeCharSequence
     protected final Range<Integer> range;
     protected final int lowerBound;
 
+    /**
+     * Protected constructor
+     *
+     * @param factory the factory used to generate this sequence
+     * @param range the <em>absolute</em> requested range
+     */
     protected TextRangeCharSequence(final CharSequenceFactory factory,
         final Range<Integer> range)
     {

@@ -18,6 +18,7 @@
 
 package com.github.fge.largetext.sequence;
 
+import com.github.fge.largetext.load.TextRange;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 
@@ -27,11 +28,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * A {@link CharSequence} spanning more than one {@link TextRange}
+ *
+ * <p>Don't use directly!</p>
+ */
 public final class MultiTextRangeCharSequence
     extends TextRangeCharSequence
 {
     private final RangeMap<Integer, CharBuffer> rangeMap;
 
+    /**
+     * Constructor
+     *
+     * @param factory the char sequence factory to use (for {@link
+     * #subSequence(int, int)})
+     * @param range the requested <em>absolute</em> range
+     * @param rangeMap map of absolute ranges and their matching char buffers
+     */
     public MultiTextRangeCharSequence(final CharSequenceFactory factory,
         final Range<Integer> range,
         final RangeMap<Integer, CharBuffer> rangeMap)
