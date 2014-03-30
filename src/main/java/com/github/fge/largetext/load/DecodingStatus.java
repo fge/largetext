@@ -108,6 +108,7 @@ final class DecodingStatus
         try {
             endLatch.await();
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException("interrupted", e);
         }
         if (exception != null)
