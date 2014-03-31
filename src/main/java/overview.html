@@ -117,7 +117,29 @@ to complete.</p>
 
 <p>In the event of a failure (either because of an I/O error, or because of an
 unmappable byte sequence) or an early thread interruption, an unchecked
-exception is thrown.</p>
+exception is thrown. If the failure is due to a requested offset being too
+large, an {@link java.lang.ArrayIndexOutOfBoundsException} is thrown.</p>
+
+<h2>Subsequence generation and text loading</h2>
+
+<p>The output of the decoding process is a {@link
+com.google.common.collect.RangeMap}, mapping character offsets to {@link
+com.github.fge.largetext.load.TextRange}s; using one <code>TextRange</code>,
+the {@link com.github.fge.largetext.load.TextLoader} instance attached to the
+file then loads (if needed) the needed text from the file in a {@link
+java.nio.CharBuffer}.</p>
+
+<p>A <code>TextLoader</code> uses a {@link com.google.common.cache.LoadingCache}
+with an expiry policy of 30 seconds after last access; at the moment, this is
+not configurable (it will be in the future); but the net effect is that each
+"text zone" in the file is shared by all instances which need it at the same
+time.</p>
+
+<p>Finally, a subsequence may cover one or more text ranges. The {@link
+com.github.fge.largetext.sequence.CharSequenceFactory} instance will account for
+this and return the minimal sequence implementation needed by the caller (either
+a {@link com.github.fge.largetext.sequence.SingleTextRangeCharSequence} or a
+{@link com.github.fge.largetext.sequence.MultiTextRangeCharSequence}).</p>
 
 </body>
 </html>

@@ -118,7 +118,8 @@ public final class LargeText
      * <p>This closes the embedded {@link TextDecoder}, and then the {@link
      * FileChannel} associated with the file.</p>
      *
-     * @throws IOException
+     * @throws IOException see {@link TextDecoder#close()} and {@link
+     * FileChannel#close()}
      */
     @Override
     public void close()
