@@ -13,12 +13,12 @@ So there you are. This package does exactly that! You can now search huge text f
 
 ## Status
 
-It works! Some parts are heavily tested, some are not.
+It works! However, no version is released yet.
 
-Full Javadoc is now written (but not available online yet). One "weak" part is the `load` package:
-while it works, it is not ideal at the moment.
+Full Javadoc is now written and [available online](http://fge.github.io/largetext/). The javadoc
+contains technical details about the implementation.
 
-## Usage
+## Quick usage
 
 The first thing to do is to create a `LargeTextFactory`. You can customize a factory in two ways:
 
@@ -76,37 +76,6 @@ try (
         System.out.println("Match: " + m.group());
 }
 ```
-
-## How it works internally
-
-There are two essential core classes to the `LargeText` class:
-
-* `TextDecoder`: this class decodes the text file chunk by chunk, in the background;
-* `TextLoader`: this class uses a `LoadingCache` (from Guava) to provide `CharBuffer` instances to
-  the methods requiring character sequences.
-
-### `TextDecoder` and waiting operations
-
-Each of the `.charAt()`, `.subSequence()` and `.length()` methods of `LargeText` can potentially
-require the caller to wait until the decoder has processed up to the number of required characters
-(all of them in the case of `.length()`).
-
-This class therefore queues a list of waiters (in a `DecodeStatus` instance) which it wakes _in
-order_. That is, a waiter on 231000 chars will be woken up before a waiter on 562000 chars.
-
-When a waiter is woken up, either it is guaranteed that the decoding went OK up to this point, in
-which case the expected result is returned, or the decoding process encountered a problem.
-
-Note that since those are blocking operations, and since the `CharSequence` interface does not allow
-to throw `InterruptedException`, on an interrupt, the thread interrupt status is restored and an
-appropriate `RuntimeException` is thrown.
-
-### `TextLoader`
-
-As mentioned earlier, this uses a `LoadingCache`. It will load, if needed, a new `CharBuffer` from
-the file by mapping the required zone from the file and decoding it using a `CharsetDecoder`.
-
-The default expiry policy (not configurable at this moment) is 30 seconds after last access.
 
 ## Limitations
 
