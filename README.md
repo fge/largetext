@@ -15,7 +15,8 @@ So there you are. This package does exactly that! You can now search huge text f
 
 It works! Some parts are heavily tested, some are not.
 
-And it seriously lacks documentation, except for the following paragraph...
+Full Javadoc is now written (but not available online yet). One "weak" part is the `load` package:
+while it works, it is not ideal at the moment.
 
 ## Usage
 
@@ -42,7 +43,7 @@ The default factory uses UTF-8 as a character encoding and a 2 MiB byte window.
 Then you create a `LargeText` instance; for this, you need the `Path` to the file.
 
 Note that `LargeText` implements `Closeable` in addition to `CharSequence`, so it is important that
-you use it this way...  Otherwise the file descriptor associated with it will stay open! Therefore:
+you use it this way... Otherwise the file descriptor associated with it will stay open! Therefore:
 
 ```java
 final Path bigTextFile = Paths.get("/path/to/bigtextfile");
@@ -58,6 +59,9 @@ As mentioned in the introduction, the fact that it implements `CharSequence` mea
 with regexes:
 
 ```java
+// You need Pattern.MULTILINE if you mean to match lines within
+// the file! Otherwise "^" and "$" will only match the beginning
+// and end of input (ie, the whole file) respectively.
 private static final Pattern PATTERN = Pattern.compile("^\\d{4}:",
     Pattern.MULTILINE);
 
@@ -79,7 +83,7 @@ There are two essential core classes to the `LargeText` class:
 
 * `TextDecoder`: this class decodes the text file chunk by chunk, in the background;
 * `TextLoader`: this class uses a `LoadingCache` (from Guava) to provide `CharBuffer` instances to
-  the methods requiring it.
+  the methods requiring character sequences.
 
 ### `TextDecoder` and waiting operations
 
@@ -90,14 +94,12 @@ require the caller to wait until the decoder has processed up to the number of r
 This class therefore queues a list of waiters (in a `DecodeStatus` instance) which it wakes _in
 order_. That is, a waiter on 231000 chars will be woken up before a waiter on 562000 chars.
 
-When a waiter is woken up, it is guaranteed that the decoding went OK up to this point, which means
-the caller can now obtain its result.
+When a waiter is woken up, either it is guaranteed that the decoding went OK up to this point, in
+which case the expected result is returned, or the decoding process encountered a problem.
 
-If the process is interrupted for one reason or another, the interrupt status is restored and a
-`RuntimeException` is thrown.
-
-Note that it may happen that a byte window will not exactly map to a char window; the decoding
-process detects that and restarts from the appropriate offset in the file.
+Note that since those are blocking operations, and since the `CharSequence` interface does not allow
+to throw `InterruptedException`, on an interrupt, the thread interrupt status is restored and an
+appropriate `RuntimeException` is thrown.
 
 ### `TextLoader`
 
