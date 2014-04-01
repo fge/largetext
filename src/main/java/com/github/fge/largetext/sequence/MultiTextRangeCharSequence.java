@@ -36,6 +36,7 @@ import java.util.Objects;
 public final class MultiTextRangeCharSequence
     extends TextRangeCharSequence
 {
+    private final CharSequenceFactory factory;
     private final RangeMap<Integer, CharBuffer> rangeMap;
 
     /**
@@ -50,7 +51,8 @@ public final class MultiTextRangeCharSequence
         final Range<Integer> range,
         final RangeMap<Integer, CharBuffer> rangeMap)
     {
-        super(factory, range);
+        super(range);
+        this.factory = factory;
         this.rangeMap = rangeMap;
     }
 
@@ -62,6 +64,12 @@ public final class MultiTextRangeCharSequence
         Objects.requireNonNull(entry, "entry should not have been null here");
         final int offset = entry.getKey().lowerEndpoint();
         return entry.getValue().charAt(realIndex - offset);
+    }
+
+    @Override
+    protected CharSequence doSubSequence(final Range<Integer> newRange)
+    {
+        return factory.getSequence(newRange);
     }
 
     @Override

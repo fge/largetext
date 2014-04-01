@@ -63,7 +63,7 @@ public final class CharSequenceFactory
         if (textRanges.size() == 1) {
             final TextRange textRange = textRanges.get(0);
             final CharBuffer buffer = loader.load(textRange);
-            return new SingleTextRangeCharSequence(this, range,
+            return new SingleTextRangeCharSequence(range,
                 textRange.getCharRange(), buffer);
         }
         final Map<TextRange, CharBuffer> map = loader.loadAll(textRanges);

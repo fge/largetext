@@ -37,16 +37,14 @@ public final class SingleTextRangeCharSequence
     /**
      * Constructor
      *
-     * @param factory the factory to produce subsequences
      * @param range the <em>absolute</em> requested range
      * @param bufferRange the <em>absolute</em> range of the buffer
      * @param buffer the character buffer matching this range
      */
-    public SingleTextRangeCharSequence(final CharSequenceFactory factory,
-        final Range<Integer> range, final Range<Integer> bufferRange,
-        final CharBuffer buffer)
+    public SingleTextRangeCharSequence(final Range<Integer> range,
+        final Range<Integer> bufferRange, final CharBuffer buffer)
     {
-        super(factory, range);
+        super(range);
         this.buffer = buffer;
         this.bufferRange = bufferRange;
     }
@@ -56,6 +54,13 @@ public final class SingleTextRangeCharSequence
     {
         return buffer.charAt(realIndex - bufferRange.lowerEndpoint());
     }
+
+    @Override
+    protected CharSequence doSubSequence(final Range<Integer> newRange)
+    {
+        return new SingleTextRangeCharSequence(newRange, bufferRange, buffer);
+    }
+
 
     @Override
     public String toString()

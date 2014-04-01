@@ -33,20 +33,16 @@ import com.google.common.collect.Range;
 public abstract class TextRangeCharSequence
     implements CharSequence
 {
-    protected final CharSequenceFactory factory;
     protected final Range<Integer> range;
     protected final int lowerBound;
 
     /**
      * Protected constructor
      *
-     * @param factory the factory used to generate this sequence
      * @param range the <em>absolute</em> requested range
      */
-    protected TextRangeCharSequence(final CharSequenceFactory factory,
-        final Range<Integer> range)
+    protected TextRangeCharSequence(final Range<Integer> range)
     {
-        this.factory = factory;
         this.range = range;
         lowerBound = range.lowerEndpoint();
     }
@@ -61,16 +57,19 @@ public abstract class TextRangeCharSequence
     @Override
     public final CharSequence subSequence(final int start, final int end)
     {
-        final Range<Integer> targetRange
+        final Range<Integer> newRange
             = Range.closedOpen(lowerBound + start, lowerBound + end);
-        if (!range.encloses(targetRange))
+        if (!range.encloses(newRange))
             throw new ArrayIndexOutOfBoundsException();
-        if (targetRange.isEmpty())
+        if (newRange.isEmpty())
             return EmptyCharSequence.INSTANCE;
-        if (range.equals(targetRange))
+        if (range.equals(newRange))
             return this;
-        return factory.getSequence(targetRange);
+        return doSubSequence(newRange);
     }
+
+    protected abstract CharSequence doSubSequence(
+        final Range<Integer> newRange);
 
     @Override
     public final char charAt(final int index)
