@@ -54,7 +54,7 @@ import java.util.concurrent.ThreadFactory;
  * <p>{@link LargeText} will call upon this class to obtain a {@link TextRange}
  * (or a list of them) containing the character at a given index (or the range
  * of characters), by using the methods {@link #getRange(int)} and {@link
- * #getRanges(com.google.common.collect.Range)} respectively.</p>
+ * #getRanges(Range)} respectively.</p>
  *
  * <p>These methods are blocking, but they <em>do not</em> throw {@link
  * InterruptedException}; if an interruption occurs, these methods reset the
@@ -75,7 +75,7 @@ public final class TextDecoder
     implements Closeable
 {
     private static final ThreadFactory THREAD_FACTORY
-        = new ThreadFactoryBuilder().setDaemon(true).build();
+        = new ThreadFactoryBuilder().setNameFormat("text-decoder").build();
 
     private final ExecutorService executor
         = Executors.newSingleThreadExecutor(THREAD_FACTORY);
@@ -178,7 +178,7 @@ public final class TextDecoder
     public void close()
         throws IOException
     {
-        executor.shutdown();
+        executor.shutdownNow();
     }
 
     private void needChars(final int needed)
