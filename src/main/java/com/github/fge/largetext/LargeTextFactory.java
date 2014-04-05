@@ -22,8 +22,6 @@ import com.google.common.base.Preconditions;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.lang.IllegalArgumentException;
-import java.lang.NullPointerException;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;

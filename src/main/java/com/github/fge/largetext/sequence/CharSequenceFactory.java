@@ -24,7 +24,6 @@ import com.github.fge.largetext.load.TextRange;
 import com.google.common.collect.ImmutableRangeMap;
 import com.google.common.collect.Range;
 
-import java.lang.CharSequence;
 import java.nio.CharBuffer;
 import java.util.List;
 import java.util.Map;
