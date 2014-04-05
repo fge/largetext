@@ -16,7 +16,7 @@
  * - ASL 2.0: http://www.apache.org/licenses/LICENSE-2.0.txt
  */
 
-package com.github.fge.largetext;
+package com.github.fge.largetext.range;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;

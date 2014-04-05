@@ -16,7 +16,7 @@
  * - ASL 2.0: http://www.apache.org/licenses/LICENSE-2.0.txt
  */
 
-package com.github.fge.largetext;
+package com.github.fge.largetext.range;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Range;
