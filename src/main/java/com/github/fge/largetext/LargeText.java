@@ -61,6 +61,9 @@ public final class LargeText
     private final TextLoader loader;
     private final CharSequenceFactory factory;
 
+    private Range<Integer> currentRange = Range.closedOpen(0, 0);
+    private CharBuffer currentBuffer = CharBuffer.allocate(0);
+
     /**
      * Package local constructor
      *
@@ -101,9 +104,12 @@ public final class LargeText
     @Override
     public char charAt(final int index)
     {
-        final TextRange textRange = decoder.getRange(index);
-        final CharBuffer buffer = loader.load(textRange);
-        return buffer.charAt(index - textRange.getCharRange().lowerEndpoint());
+        if (!currentRange.contains(index)) {
+            final TextRange textRange = decoder.getRange(index);
+            currentRange = textRange.getCharRange();
+            currentBuffer = loader.load(textRange);
+        }
+        return currentBuffer.charAt(index - currentRange.lowerEndpoint());
     }
 
     @Override
