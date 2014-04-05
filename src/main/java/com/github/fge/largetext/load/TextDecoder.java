@@ -198,8 +198,7 @@ public final class TextDecoder
             public void run()
             {
                 final CharsetDecoder decoder = charset.newDecoder()
-                    .onMalformedInput(CodingErrorAction.REPORT)
-                    .onUnmappableCharacter(CodingErrorAction.REPORT);
+                    .onMalformedInput(CodingErrorAction.REPORT);
                 final CharBuffer charMap
                     = CharBuffer.allocate((int) targetMapSize);
 
@@ -244,10 +243,6 @@ public final class TextDecoder
         decoder.reset();
 
         final CoderResult result = decoder.decode(byteMap, charMap, true);
-
-        // FIXME
-        if (result.isUnmappable())
-            result.throwException();
 
         /*
          * Incomplete byte sequence: in this case, the mapping position reflects
