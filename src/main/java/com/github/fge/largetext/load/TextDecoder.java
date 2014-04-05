@@ -205,24 +205,24 @@ public final class TextDecoder
 
                 long byteOffset = 0L;
                 int charOffset = 0;
-                TextRange range;
+                TextRange textRange;
 
                 while (byteOffset < fileSize) {
                     try {
-                        range = nextRange(byteOffset, charOffset, decoder,
+                        textRange = nextRange(byteOffset, charOffset, decoder,
                             charMap);
-                        if (range.getByteRange().isEmpty())
+                        if (textRange.getByteRange().isEmpty())
                             throw new IOException("unable to read file as text "
                                 + "starting from byte offset " + byteOffset);
                     } catch (IOException e) {
                         status.setFailed(e);
                         break;
                     }
-                    byteOffset = range.getByteRange().upperEndpoint();
-                    charOffset = range.getCharRange().upperEndpoint();
+                    byteOffset = textRange.getByteRange().upperEndpoint();
+                    charOffset = textRange.getCharRange().upperEndpoint();
                     status.setNrChars(charOffset);
                     synchronized (ranges) {
-                        ranges.put(range.getCharRange(), range);
+                        ranges.put(textRange.getCharRange(), textRange);
                     }
                 }
                 status.setFinished(charOffset);
