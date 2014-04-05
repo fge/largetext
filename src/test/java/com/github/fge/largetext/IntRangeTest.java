@@ -55,7 +55,7 @@ public final class IntRangeTest
     {
         final List<Object[]> list = new ArrayList<>();
 
-        list.add(new Object[] { new IntRange(5, 7), true });
+        list.add(new Object[]{ new IntRange(5, 7), true });
         list.add(new Object[] { new IntRange(4, 8), true });
         list.add(new Object[] { new IntRange(4, 9), false });
         list.add(new Object[] { new IntRange(1, 7), false });
@@ -67,8 +67,27 @@ public final class IntRangeTest
     public void enclosedRangesAreCorrectlyDetected(final IntRange other,
         final boolean expected)
     {
-        final IntRange range = new IntRange(4, 8);
-        assertEquals(range.encloses(other), expected,
+        assertEquals(SAMPLE_RANGE.encloses(other), expected,
             "range enclosing gives wrong result");
+    }
+
+    @Test
+    public void cannotAppendIncompatibleRanges()
+    {
+        try {
+            SAMPLE_RANGE.append(new IntRange(9, 10));
+            fail("No exception thrown!!");
+        } catch (IllegalArgumentException e) {
+            assertEquals(e.getMessage(), "lower bound of range in argument " +
+                "must be equal to this range's upper bound");
+        }
+    }
+
+    @Test
+    public void appendingWorksAsExpected()
+    {
+        final IntRange other = new IntRange(8, 29);
+        final IntRange expected = new IntRange(4, 29);
+        assertEquals(SAMPLE_RANGE.append(other), expected);
     }
 }

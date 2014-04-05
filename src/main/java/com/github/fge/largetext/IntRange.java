@@ -21,7 +21,9 @@ package com.github.fge.largetext;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Range;
 
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
+import java.util.Objects;
 
 /**
  * "Reduced" version of Guava's {@link Range} for int primitives
@@ -38,6 +40,14 @@ public final class IntRange
     private final int lowerBound;
     private final int upperBound;
 
+    /**
+     * Constructor
+     *
+     * @param lowerBound the lower bound (inclusive)
+     * @param upperBound the upper bound (exclusive)
+     * @throws IllegalArgumentException the upper bound is strictly less than
+     * the lower bound.
+     */
     public IntRange(final int lowerBound, final int upperBound)
     {
         Preconditions.checkArgument(upperBound >= lowerBound,
@@ -46,29 +56,79 @@ public final class IntRange
         this.upperBound = upperBound;
     }
 
+    /**
+     * Get the (inclusive) lower bound of this range
+     *
+     * @return see description
+     */
     public int getLowerBound()
     {
         return lowerBound;
     }
 
+    /**
+     * Get the (exclusive) upper bound of this range
+     *
+     * @return see description
+     */
     public int getUpperBound()
     {
         return upperBound;
     }
 
+    /**
+     * Does this range contain the target value?
+     *
+     * @param value the value to test
+     * @return true if and only if {@code value} is between the lower range
+     * (inclusive) and the upper range (exclusive)
+     */
     public boolean contains(final int value)
     {
         return value >= lowerBound && value < upperBound;
     }
 
+    /**
+     * Is this range empty?
+     *
+     * @return true if and only if the lower and upper bounds are equal
+     */
     public boolean isEmpty()
     {
         return lowerBound == upperBound;
     }
 
-    public boolean encloses(final IntRange other)
+    /**
+     * Does this range enclose another range?
+     *
+     * @param other the other range
+     * @return true if the bounds of the other range are within the
+     * bounds of this range
+     */
+    public boolean encloses(@Nonnull final IntRange other)
     {
+        Objects.requireNonNull(other, "argument cannot be null");
         return lowerBound <= other.lowerBound && upperBound >= other.upperBound;
+    }
+
+    /**
+     * Append another range to the current range
+     *
+     * <p>The range as an argument can be appended to the current one if and
+     * only if this range's upper bound equals the other range's lower bound. If
+     * this is not the case, an {@link IllegalArgumentException} is thrown.</p>
+     *
+     * @param other the range to append
+     * @return a <strong>new</strong> {@code IntRange} instance (since this
+     * class is immutable)
+     */
+    public IntRange append(@Nonnull final IntRange other)
+    {
+        Objects.requireNonNull(other, "argument cannot be null");
+        Preconditions.checkArgument(upperBound == other.lowerBound, "lower " +
+            "bound of range in argument must be equal to this range's upper " +
+            "bound");
+        return new IntRange(lowerBound, other.upperBound);
     }
 
     @Override
@@ -94,6 +154,6 @@ public final class IntRange
     @Override
     public String toString()
     {
-        return String.format("[%d,%d)", lowerBound, upperBound);
+        return String.format("[%d, %d)", lowerBound, upperBound);
     }
 }
