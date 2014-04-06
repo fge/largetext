@@ -120,6 +120,24 @@ unmappable byte sequence) or an early thread interruption, an unchecked
 exception is thrown. If the failure is due to a requested offset being too
 large, an {@link java.lang.ArrayIndexOutOfBoundsException} is thrown.</p>
 
+<h2>{@code LargeText}</h2>
+
+<p>This is your "only" interface with the underlying text file, and unless the
+{@link java.util.regex.Matcher}, for instance, decides otherwise, also the
+only interface that it will use.</p>
+
+<p>There is one thing in particular that you should be aware of: <strong>the
+ {@code toString()} operation is EXPENSIVE</strong>. A {@code CharSequence}'s
+.toString() is supposed to dump the whole content of it. With a {@code
+LargeText}, this basically means the whole file!</p>
+
+<p>The other point of interest is that a {@code LargeText} caches the last
+character buffer that was requested by the caller; following the locality
+principle, chances are very high that the next requested character from it will
+be fulfillable by the buffer currently held. For performance reasons, this
+package also contains a simple, fast integer range: see {@link
+com.github.fge.largetext.range.IntRange}.</p>
+
 <h2>Subsequence generation and text loading</h2>
 
 <p>The output of the decoding process is a {@link
