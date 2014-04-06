@@ -48,7 +48,7 @@ import java.util.concurrent.ThreadFactory;
  * Text file decoder
  *
  * <p>This is the first core class of this package (the second is {@link
- * TextLoader}. Its role is to decode a text file chunk by chunk. The size of
+ * TextCache}. Its role is to decode a text file chunk by chunk. The size of
  * chunks to use is determined when you build your {@link LargeTextFactory}.</p>
  *
  * <p>{@link LargeText} will call upon this class to obtain a {@link TextRange}

@@ -18,8 +18,8 @@
 
 package com.github.fge.largetext.sequence;
 
+import com.github.fge.largetext.load.TextCache;
 import com.github.fge.largetext.load.TextDecoder;
-import com.github.fge.largetext.load.TextLoader;
 import com.github.fge.largetext.load.TextRange;
 import com.google.common.collect.ImmutableRangeMap;
 import com.google.common.collect.Range;
@@ -34,10 +34,10 @@ import java.util.Map;
 public final class CharSequenceFactory
 {
     private final TextDecoder decoder;
-    private final TextLoader loader;
+    private final TextCache loader;
 
     public CharSequenceFactory(final TextDecoder decoder,
-        final TextLoader loader)
+        final TextCache loader)
     {
         this.decoder = decoder;
         this.loader = loader;

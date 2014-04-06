@@ -19,7 +19,7 @@
 package com.github.fge.largetext.sequence;
 
 import com.github.fge.largetext.load.TextDecoder;
-import com.github.fge.largetext.load.TextLoader;
+import com.github.fge.largetext.load.TextCache;
 import com.google.common.collect.Range;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -58,7 +58,7 @@ public final class TextRangeCharSequenceTest
         }
         channel = FileChannel.open(testFile, StandardOpenOption.READ);
         final TextDecoder decoder = new TextDecoder(channel, charset, 1000L);
-        final TextLoader loader = new TextLoader(channel, charset);
+        final TextCache loader = new TextCache(channel, charset);
         factory = new CharSequenceFactory(decoder, loader);
     }
 

@@ -55,7 +55,7 @@
  * <p>The notes above are for the decoding process only, which happens once per
  * file. Memory usage of a {@link com.github.fge.largetext.LargeText} instance
  * depend on how much you require at a time from its attached {@link
- * com.github.fge.largetext.load.TextLoader} instance; its backend is a {@link
+ * com.github.fge.largetext.load.TextCache} instance; its backend is a {@link
  * com.google.common.cache.LoadingCache} (from Guava) with an expiry policy of
  * 30 seconds after last <em>access</em>. At this moment, this is not
  * configurable.</p>

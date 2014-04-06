@@ -43,14 +43,14 @@ import static java.nio.channels.FileChannel.*;
  *
  * <p>This class will load character sequences from a large text file as
  * described by {@link TextRange} instances (which are produced by a {@link
- * TextLoader} instance).</p>
+ * TextDecoder} instance).</p>
  *
  * <p>This uses Guava's {@link LoadingCache} to do the job. The default expiry
  * policy (not configurable at the moment) is to expire entries 30 seconds after
  * they were last accessed.</p>
  */
 @ThreadSafe
-public final class TextLoader
+public final class TextCache
 {
     private final FileChannel channel;
     private final Charset charset;
@@ -62,7 +62,7 @@ public final class TextLoader
      */
     private final LoadingCache<TextRange, CharBuffer> cache;
 
-    public TextLoader(final FileChannel channel, final Charset charset)
+    public TextCache(final FileChannel channel, final Charset charset)
     {
         this.channel = channel;
         this.charset = charset;
