@@ -19,6 +19,7 @@
 package com.github.fge.largetext.sequence;
 
 import com.github.fge.largetext.load.TextRange;
+import com.github.fge.largetext.range.IntRange;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 
@@ -48,7 +49,7 @@ public final class MultiTextRangeCharSequence
      * @param rangeMap map of absolute ranges and their matching char buffers
      */
     public MultiTextRangeCharSequence(final CharSequenceFactory factory,
-        final Range<Integer> range,
+        final IntRange range,
         final RangeMap<Integer, CharBuffer> rangeMap)
     {
         super(range);
@@ -67,7 +68,7 @@ public final class MultiTextRangeCharSequence
     }
 
     @Override
-    protected CharSequence doSubSequence(final Range<Integer> newRange)
+    protected CharSequence doSubSequence(final IntRange newRange)
     {
         return factory.getSequence(newRange);
     }
@@ -87,7 +88,7 @@ public final class MultiTextRangeCharSequence
             sb.append(buffer);
 
         final int start = lowerBound - first.lowerEndpoint();
-        final int end = range.upperEndpoint() - first.lowerEndpoint();
+        final int end = range.getUpperBound() - first.lowerEndpoint();
         return sb.subSequence(start, end).toString();
     }
 

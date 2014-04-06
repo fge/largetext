@@ -18,9 +18,9 @@
 
 package com.github.fge.largetext.sequence;
 
-import com.github.fge.largetext.load.TextDecoder;
 import com.github.fge.largetext.load.TextCache;
-import com.google.common.collect.Range;
+import com.github.fge.largetext.load.TextDecoder;
+import com.github.fge.largetext.range.IntRange;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -65,7 +65,7 @@ public final class TextRangeCharSequenceTest
     @Test
     public void charAtWorksAsExpected()
     {
-        final Range<Integer> range = Range.closedOpen(0, 1000);
+        final IntRange range = new IntRange(0, 1000);
         final CharSequence sequence = factory.getSequence(range);
         assertEquals(sequence.charAt(19), 'j');
     }
@@ -73,7 +73,7 @@ public final class TextRangeCharSequenceTest
     @Test
     public void subsequencesExtractedAreIndexedCorrectly()
     {
-        final Range<Integer> range = Range.closedOpen(1000, 2000);
+        final IntRange range = new IntRange(1000, 2000);
         final CharSequence sequence = factory.getSequence(range);
         final CharSequence subsequence = sequence.subSequence(19, 34);
         assertEquals(subsequence.charAt(0), 'j');
@@ -83,7 +83,7 @@ public final class TextRangeCharSequenceTest
     @Test
     public void lengthOfASequenceIsCorrectlyCalculated()
     {
-        final Range<Integer> range = Range.closedOpen(2601, 2733);
+        final IntRange range = new IntRange(2601, 2733);
         final CharSequence sequence = factory.getSequence(range);
         assertEquals(sequence.length(), 132);
     }
@@ -91,7 +91,7 @@ public final class TextRangeCharSequenceTest
     @Test
     public void multiRangeCharSequencesWorkCorrectly()
     {
-        final Range<Integer> range = Range.closedOpen(2601, 3733);
+        final IntRange range = new IntRange(2601, 3733);
         final CharSequence sequence = factory.getSequence(range);
         assertEquals(sequence.length(), 1132);
     }

@@ -18,8 +18,8 @@
 
 package com.github.fge.largetext.load;
 
+import com.github.fge.largetext.range.IntRange;
 import com.github.fge.largetext.range.LongRange;
-import com.google.common.collect.Range;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
@@ -35,28 +35,29 @@ import javax.annotation.concurrent.Immutable;
  * <em>exclude</em> the upper bound).</p>
  *
  * @see TextDecoder
- * @see Range#closedOpen(Comparable, Comparable)
+ * @see IntRange
+ * @see LongRange
  */
 @Immutable
 public final class TextRange
     implements Comparable<TextRange>
 {
-    private final Range<Integer> charRange;
+    private final IntRange charRange;
     private final LongRange byteRange;
 
     public TextRange(final long byteOffset, final long nrBytes,
         final int charOffset, final int nrChars)
     {
         byteRange = new LongRange(byteOffset, byteOffset + nrBytes);
-        charRange = Range.closedOpen(charOffset, charOffset + nrChars);
+        charRange = new IntRange(charOffset, charOffset + nrChars);
     }
 
     /**
      * Return the (absolute) character range corresponding to that text range
      *
-     * @return the range, as a {@link Range}
+     * @return the range, as an {@link IntRange}
      */
-    public Range<Integer> getCharRange()
+    public IntRange getCharRange()
     {
         return charRange;
     }
@@ -74,8 +75,8 @@ public final class TextRange
     @Override
     public int compareTo(@Nonnull final TextRange o)
     {
-        return Integer.compare(charRange.lowerEndpoint(),
-            o.charRange.lowerEndpoint());
+        return Integer.compare(charRange.getLowerBound(),
+            o.charRange.getLowerBound());
     }
 
     @Override

@@ -21,8 +21,8 @@ package com.github.fge.largetext.sequence;
 import com.github.fge.largetext.load.TextCache;
 import com.github.fge.largetext.load.TextDecoder;
 import com.github.fge.largetext.load.TextRange;
+import com.github.fge.largetext.range.IntRange;
 import com.google.common.collect.ImmutableRangeMap;
-import com.google.common.collect.Range;
 
 import java.nio.CharBuffer;
 import java.util.List;
@@ -54,7 +54,7 @@ public final class CharSequenceFactory
      * @param range the range of characters
      * @return the appropriate {@link CharSequence}
      */
-    public CharSequence getSequence(final Range<Integer> range)
+    public CharSequence getSequence(final IntRange range)
     {
         if (range.isEmpty())
             return EmptyCharSequence.INSTANCE;
@@ -70,7 +70,8 @@ public final class CharSequenceFactory
             = ImmutableRangeMap.builder();
 
         for (final Map.Entry<TextRange, CharBuffer> entry: map.entrySet())
-            builder.put(entry.getKey().getCharRange(), entry.getValue());
+            builder.put(entry.getKey().getCharRange().asGuavaRange(),
+                entry.getValue());
 
         return new MultiTextRangeCharSequence(this, range, builder.build());
     }

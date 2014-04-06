@@ -19,7 +19,7 @@
 package com.github.fge.largetext.sequence;
 
 import com.github.fge.largetext.load.TextRange;
-import com.google.common.collect.Range;
+import com.github.fge.largetext.range.IntRange;
 
 import java.nio.CharBuffer;
 
@@ -32,7 +32,7 @@ public final class SingleTextRangeCharSequence
     extends TextRangeCharSequence
 {
     private final CharBuffer buffer;
-    private final Range<Integer> bufferRange;
+    private final IntRange bufferRange;
 
     /**
      * Constructor
@@ -41,8 +41,8 @@ public final class SingleTextRangeCharSequence
      * @param bufferRange the <em>absolute</em> range of the buffer
      * @param buffer the character buffer matching this range
      */
-    public SingleTextRangeCharSequence(final Range<Integer> range,
-        final Range<Integer> bufferRange, final CharBuffer buffer)
+    public SingleTextRangeCharSequence(final IntRange range,
+        final IntRange bufferRange, final CharBuffer buffer)
     {
         super(range);
         this.buffer = buffer;
@@ -52,11 +52,11 @@ public final class SingleTextRangeCharSequence
     @Override
     protected char doCharAt(final int realIndex)
     {
-        return buffer.charAt(realIndex - bufferRange.lowerEndpoint());
+        return buffer.charAt(realIndex - bufferRange.getLowerBound());
     }
 
     @Override
-    protected CharSequence doSubSequence(final Range<Integer> newRange)
+    protected CharSequence doSubSequence(final IntRange newRange)
     {
         return new SingleTextRangeCharSequence(newRange, bufferRange, buffer);
     }
@@ -65,8 +65,8 @@ public final class SingleTextRangeCharSequence
     @Override
     public String toString()
     {
-        final int start = range.lowerEndpoint() - bufferRange.lowerEndpoint();
-        final int end = range.upperEndpoint() - bufferRange.lowerEndpoint();
+        final int start = range.getLowerBound() - bufferRange.getLowerBound();
+        final int end = range.getUpperBound() - bufferRange.getLowerBound();
         return buffer.subSequence(start, end).toString();
     }
 }

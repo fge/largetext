@@ -19,7 +19,7 @@
 package com.github.fge.largetext.sequence;
 
 import com.github.fge.largetext.load.TextRange;
-import com.google.common.collect.Range;
+import com.github.fge.largetext.range.IntRange;
 
 /**
  * One {@link CharSequence} built out of one or more {@link TextRange}s
@@ -33,7 +33,7 @@ import com.google.common.collect.Range;
 public abstract class TextRangeCharSequence
     implements CharSequence
 {
-    protected final Range<Integer> range;
+    protected final IntRange range;
     protected final int lowerBound;
 
     /**
@@ -41,24 +41,24 @@ public abstract class TextRangeCharSequence
      *
      * @param range the <em>absolute</em> requested range
      */
-    protected TextRangeCharSequence(final Range<Integer> range)
+    protected TextRangeCharSequence(final IntRange range)
     {
         this.range = range;
-        lowerBound = range.lowerEndpoint();
+        lowerBound = range.getLowerBound();
     }
 
     @Override
     public final int length()
     {
         // Since ranges are always closed at the end, this works
-        return range.upperEndpoint() - lowerBound;
+        return range.getUpperBound() - lowerBound;
     }
 
     @Override
     public final CharSequence subSequence(final int start, final int end)
     {
-        final Range<Integer> newRange
-            = Range.closedOpen(lowerBound + start, lowerBound + end);
+        final IntRange newRange
+            = new IntRange(lowerBound + start, lowerBound + end);
         if (!range.encloses(newRange))
             throw new ArrayIndexOutOfBoundsException();
         if (newRange.isEmpty())
@@ -69,7 +69,7 @@ public abstract class TextRangeCharSequence
     }
 
     protected abstract CharSequence doSubSequence(
-        final Range<Integer> newRange);
+        final IntRange newRange);
 
     @Override
     public final char charAt(final int index)

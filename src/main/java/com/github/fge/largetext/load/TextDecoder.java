@@ -20,8 +20,8 @@ package com.github.fge.largetext.load;
 
 import com.github.fge.largetext.LargeText;
 import com.github.fge.largetext.LargeTextFactory;
+import com.github.fge.largetext.range.IntRange;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 import com.google.common.collect.TreeRangeMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -54,7 +54,7 @@ import java.util.concurrent.ThreadFactory;
  * <p>{@link LargeText} will call upon this class to obtain a {@link TextRange}
  * (or a list of them) containing the character at a given index (or the range
  * of characters), by using the methods {@link #getRange(int)} and {@link
- * #getRanges(Range)} respectively.</p>
+ * #getRanges(IntRange)} respectively.</p>
  *
  * <p>These methods are blocking, but they <em>do not</em> throw {@link
  * InterruptedException}; if an interruption occurs, these methods reset the
@@ -142,17 +142,18 @@ public final class TextDecoder
      * @throws ArrayIndexOutOfBoundsException range is out of bounds for this
      * decoder
      */
-    public List<TextRange> getRanges(final Range<Integer> range)
+    public List<TextRange> getRanges(final IntRange range)
     {
         try {
-            needChars(range.upperEndpoint());
+            needChars(range.getUpperBound());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Interrupted", e);
         }
         final Collection<TextRange> ret;
         synchronized (ranges) {
-            ret = ranges.subRangeMap(range).asMapOfRanges().values();
+            ret = ranges.subRangeMap(range.asGuavaRange())
+                .asMapOfRanges().values();
         }
         return ImmutableList.copyOf(ret);
     }
@@ -218,10 +219,11 @@ public final class TextDecoder
                         break;
                     }
                     byteOffset = textRange.getByteRange().getUpperBound();
-                    charOffset = textRange.getCharRange().upperEndpoint();
+                    charOffset = textRange.getCharRange().getUpperBound();
                     status.setNrChars(charOffset);
                     synchronized (ranges) {
-                        ranges.put(textRange.getCharRange(), textRange);
+                        ranges.put(textRange.getCharRange().asGuavaRange(),
+                            textRange);
                     }
                 }
                 status.setFinished(charOffset);

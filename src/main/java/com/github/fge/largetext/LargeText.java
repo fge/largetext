@@ -21,8 +21,8 @@ package com.github.fge.largetext;
 import com.github.fge.largetext.load.TextCache;
 import com.github.fge.largetext.load.TextDecoder;
 import com.github.fge.largetext.load.TextRange;
+import com.github.fge.largetext.range.IntRange;
 import com.github.fge.largetext.sequence.CharSequenceFactory;
-import com.google.common.collect.Range;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -61,7 +61,7 @@ public final class LargeText
     private final TextCache loader;
     private final CharSequenceFactory factory;
 
-    private Range<Integer> currentRange = Range.closedOpen(0, 0);
+    private IntRange currentRange = new IntRange(0, 0);
     private CharBuffer currentBuffer = CharBuffer.allocate(0);
 
     /**
@@ -109,13 +109,13 @@ public final class LargeText
             currentRange = textRange.getCharRange();
             currentBuffer = loader.load(textRange);
         }
-        return currentBuffer.charAt(index - currentRange.lowerEndpoint());
+        return currentBuffer.charAt(index - currentRange.getLowerBound());
     }
 
     @Override
     public CharSequence subSequence(final int start, final int end)
     {
-        return factory.getSequence(Range.closedOpen(start, end));
+        return factory.getSequence(new IntRange(start, end));
     }
 
     /**

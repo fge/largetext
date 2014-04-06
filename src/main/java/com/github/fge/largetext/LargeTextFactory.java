@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Objects;
@@ -99,7 +100,7 @@ public final class LargeTextFactory
      * @throws IOException failed to open a (read only) {@link FileChannel} for
      * the given path
      *
-     * @see FileChannel#open(java.nio.file.Path, java.nio.file.OpenOption...)
+     * @see FileChannel#open(Path, OpenOption...)
      */
     public LargeText fromPath(final Path path)
         throws IOException
