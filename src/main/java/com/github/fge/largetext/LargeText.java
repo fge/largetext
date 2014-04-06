@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A large text file as a {@link CharSequence}
@@ -50,6 +52,10 @@ import java.nio.charset.Charset;
  *
  * <p>Failing to close the instance correctly means you leak a file descriptor
  * to the text file you are using!</p>
+ *
+ * <p><strong>BIG FAT WARNING:</strong> getting the contents of a {@code
+ * CharSequence} as a {@link String} using {@link Object#toString()} basically
+ * dumps <strong>the contents of the whole file!</strong></p>
  *
  * @see LargeTextFactory
  */
@@ -133,5 +139,25 @@ public final class LargeText
     {
         decoder.close();
         channel.close();
+    }
+
+    /**
+     * *gasp* the whole instance as a string...
+     *
+     * <p>Basically this is a string representing the whole text file!</p>
+     *
+     * @return something veeery huge
+     */
+    @Override
+    public String toString()
+    {
+        final int len = length();
+        final IntRange range = new IntRange(0, len);
+        final List<TextRange> textRanges = decoder.getRanges(range);
+        final Map<TextRange, CharBuffer> map = loader.loadAll(textRanges);
+        final StringBuilder sb = new StringBuilder(len);
+        for (final CharBuffer buffer: map.values())
+            sb.append(buffer);
+        return sb.toString();
     }
 }
