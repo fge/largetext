@@ -20,22 +20,19 @@ contains technical details about the implementation.
 
 ### Performance
 
-Not up to par with other tools you could use for such purposes yet. But
-reasonable enough that it is usable! For instance, searching all lines more than
-10 characters long in a 800 MB file takes approximately 20 seconds on my machine
-(yielding 1.6 million matches). This is the same as `python`, but slower than
-`perl` (12 seconds) and especially `grep` (3 seconds!!). This is of course using
-regexes; there _are_ faster ways to do this without regexes.
+Not up to par with other tools you could use for such purposes yet. But reasonable enough that it is
+usable! For instance, searching all lines more than 10 characters long in a 800 MB file takes
+approximately 12 seconds on my machine (yielding 1.6 million matches). This is faster than `python`,
+and on par with `perl` but slower than the monstruously fast `grep` (3 seconds!!). This is of course
+using regexes; there _are_ faster ways to do this without regexes.
 
-### Profiling data curiosity...
+### Warning about `.toString()`!
 
-The same sample program run through JVisualVM shows that what takes the most
-memory is `Integer`s, not `char` arrays...
+This is the most expensive operation of them all, since when you get a `CharSequence`'s
+`.toString()`, you are supposed to get the contents of that `CharSequence`. Therefore a _very_ huge
+`String`...
 
-But that is not surprising: regexes essentially make calls to `.charAt()`, and
-Guava's `Range` is used to "locate" text mappings. And `Range` has no primitive
-versions. Writing a custom `Range`-like class accepting "raw" `int`s would
-probably make the program much faster.
+Beware when debugging!
 
 ## Quick usage
 
