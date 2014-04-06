@@ -18,6 +18,7 @@
 
 package com.github.fge.largetext.load;
 
+import com.github.fge.largetext.range.LongRange;
 import com.google.common.collect.Range;
 
 import javax.annotation.Nonnull;
@@ -41,12 +42,12 @@ public final class TextRange
     implements Comparable<TextRange>
 {
     private final Range<Integer> charRange;
-    private final Range<Long> byteRange;
+    private final LongRange byteRange;
 
     public TextRange(final long byteOffset, final long nrBytes,
         final int charOffset, final int nrChars)
     {
-        byteRange = Range.closedOpen(byteOffset, byteOffset + nrBytes);
+        byteRange = new LongRange(byteOffset, byteOffset + nrBytes);
         charRange = Range.closedOpen(charOffset, charOffset + nrChars);
     }
 
@@ -63,9 +64,9 @@ public final class TextRange
     /**
      * Return the (absolute) file mapping range corresponding to that text range
      *
-     * @return the range, as a {@link Range}
+     * @return the range, as a {@link LongRange}
      */
-    public Range<Long> getByteRange()
+    public LongRange getByteRange()
     {
         return byteRange;
     }

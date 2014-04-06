@@ -18,10 +18,10 @@
 
 package com.github.fge.largetext.load;
 
+import com.github.fge.largetext.range.LongRange;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Range;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
@@ -114,9 +114,9 @@ public final class TextCache
             public CharBuffer load(@Nonnull final TextRange key)
                 throws IOException
             {
-                final Range<Long> byteRange = key.getByteRange();
-                final long start = byteRange.lowerEndpoint();
-                final long size = byteRange.upperEndpoint() - start;
+                final LongRange byteRange = key.getByteRange();
+                final long start = byteRange.getLowerBound();
+                final long size = byteRange.getUpperBound() - start;
                 final MappedByteBuffer buffer = channel.map(MapMode.READ_ONLY,
                     start, size);
                 final CharsetDecoder decoder = charset.newDecoder();

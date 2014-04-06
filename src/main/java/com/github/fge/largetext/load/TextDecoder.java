@@ -217,7 +217,7 @@ public final class TextDecoder
                         status.setFailed(e);
                         break;
                     }
-                    byteOffset = textRange.getByteRange().upperEndpoint();
+                    byteOffset = textRange.getByteRange().getUpperBound();
                     charOffset = textRange.getCharRange().upperEndpoint();
                     status.setNrChars(charOffset);
                     synchronized (ranges) {
