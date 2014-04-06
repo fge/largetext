@@ -30,7 +30,8 @@ import java.util.Objects;
  * "Reduced" version of Guava's {@link Range} for int primitives
  *
  * <p>The lower bound is always inclusive, and the upper bound is always
- * exclusive.</p>
+ * exclusive (same as Guava's {@link Range#closedOpen(Comparable,
+ * Comparable)}).</p>
  *
  * <p>It is customarily developed for the needs of this package; therefore it
  * only has a limited set of methods.</p>
