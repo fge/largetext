@@ -199,7 +199,8 @@ public final class TextDecoder
             public void run()
             {
                 final CharsetDecoder decoder = charset.newDecoder()
-                    .onMalformedInput(CodingErrorAction.REPORT);
+                    .onMalformedInput(CodingErrorAction.REPORT)
+                    .onUnmappableCharacter(CodingErrorAction.REPORT);
                 final CharBuffer charMap
                     = CharBuffer.allocate((int) targetMapSize);
 
@@ -245,6 +246,13 @@ public final class TextDecoder
         decoder.reset();
 
         final CoderResult result = decoder.decode(byteMap, charMap, true);
+
+        /*
+         * Unmappable character... It _can_ happen even with a decoder, see
+         * http://stackoverflow.com/a/22902806/1093528
+         */
+        if (result.isUnmappable())
+            result.throwException();
 
         /*
          * Incomplete byte sequence: in this case, the mapping position reflects
