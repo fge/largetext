@@ -22,7 +22,7 @@ contains technical details about the implementation.
 
 Not up to par with other tools you could use for such purposes yet. But reasonable enough that it is
 usable! For instance, searching all lines more than 10 characters long in a 800 MB file takes
-approximately 12 seconds on my machine (yielding 1.6 million matches). This is faster than `python`,
+approximately 12 seconds on my machine (yielding 16 million matches). This is faster than `python`,
 and on par with `perl` but slower than the monstruously fast `grep` (3 seconds!!). This is of course
 using regexes; there _are_ faster ways to do this without regexes.
 
