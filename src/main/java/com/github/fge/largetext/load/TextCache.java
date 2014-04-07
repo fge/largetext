@@ -120,7 +120,7 @@ public final class TextCache
                 final MappedByteBuffer buffer = channel.map(MapMode.READ_ONLY,
                     start, size);
                 final CharsetDecoder decoder = charset.newDecoder();
-                return decoder.decode(buffer);
+                return decoder.decode(buffer).asReadOnlyBuffer();
             }
         };
     }
