@@ -18,6 +18,7 @@
 
 package com.github.fge.largetext.sequence;
 
+import com.github.fge.largetext.LargeText;
 import com.github.fge.largetext.load.TextCache;
 import com.github.fge.largetext.load.TextDecoder;
 import com.github.fge.largetext.load.TextRange;
@@ -29,7 +30,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Build subsequences from a text file
+ * Large text file character subsequence provider
+ *
+ * <p>This class is used both by {@link LargeText} and {@link
+ * MultiTextRangeCharSequence}; even though they both <em>do</em> implement
+ * {@link CharSequence}, they do not know how to produce subsequences of
+ * themselves; they delegate such matters to this class.</p>
+ *
+ * <p>Note that if the requested range fits into a single {@link TextRange}, a
+ * simple {@link CharBuffer} (or subsequence thereof) is returned because this
+ * class knows how to produce subsequences of itself.</p>
+ *
+ * @see TextDecoder#getRanges(IntRange)
  */
 public final class CharSequenceFactory
 {
@@ -47,11 +59,11 @@ public final class CharSequenceFactory
      * Get an appropriate character sequence for the requested range
      *
      * <p>Depending on the requested range and window size, this will return
-     * either a {@link SingleTextRangeCharSequence} or a {@link
-     * MultiTextRangeCharSequence}, or even {@link EmptyCharSequence#INSTANCE}
-     * if the requested range is empty.</p>
+     * either a ({@link CharSequence#subSequence(int, int)} of a) {@link
+     * CharBuffer}, a {@link MultiTextRangeCharSequence}, or even {@link
+     * EmptyCharSequence#INSTANCE} if the requested range is empty.</p>
      *
-     * @param range the range of characters
+     * @param range the requested range of characters
      * @return the appropriate {@link CharSequence}
      */
     public CharSequence getSequence(final IntRange range)
@@ -61,9 +73,11 @@ public final class CharSequenceFactory
         final List<TextRange> textRanges = decoder.getRanges(range);
         if (textRanges.size() == 1) {
             final TextRange textRange = textRanges.get(0);
+            final IntRange charRange = textRange.getCharRange();
             final CharBuffer buffer = loader.load(textRange);
-            return new SingleTextRangeCharSequence(range,
-                textRange.getCharRange(), buffer);
+            final int start = range.getLowerBound() - charRange.getLowerBound();
+            final int end = range.getUpperBound() - charRange.getLowerBound();
+            return buffer.subSequence(start, end);
         }
         final Map<TextRange, CharBuffer> map = loader.loadAll(textRanges);
         final ImmutableRangeMap.Builder<Integer, CharBuffer> builder
