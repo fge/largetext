@@ -1,36 +1,65 @@
 ## What this is
 
-In [this StackOverflow question](http://stackoverflow.com/q/22017480/1093528), I
-suggested to map a large text file to Java's
-[`CharSequence`](http://docs.oracle.com/javase/7/docs/api/java/lang/CharSequence.html)
-since when you build a `Matcher` from a `Pattern`, the expected argument is a
-`CharSequence`.
+This library allows you to use very large (up to a few GiB) text files as
+[`CharSequence`](http://docs.oracle.com/javase/8/docs/api/java/lang/CharSequence.html).
 
-So there you are. This package does exactly that! You can now search huge text files with regexes
-(there are limitations however, see below).
+OK, this does not sound very sexy, but please read on!
 
-**NOTE: requires Java 7**
+## Motivation; and a bit of history
 
-## Status
+This project stemmed from a [discussion on
+StackOverflow](http://stackoverflow.com/q/22017480/1093528) where I suggested that the OP (in
+StackOverflow jargon, that means the user asking a question) implemented `CharSequence` over a large
+text file.
 
-It works! However, no version is released yet.
+Even though the answer was accepted, well, nothing existed for that; and since I like a challenge
+(and there are many in this case), instead of just being satisfied with the answer, I decided to
+have a go at it; hence this project was born.
 
-Full Javadoc is now written and [available online](http://fge.github.io/largetext/). The javadoc
-contains technical details about the implementation.
+But the story does not end here. Since then I have also been working on
+[Grappa](https://github.com/parboiled1/grappa), which is Parboiled (v1) continued; having this
+package in a corner of my mind, I decided to add `CharSequence` support.
 
-### Performance
+So there we are: you can now use not only regexes, but **full fledged parboiled1/grappa grammars**,
+on large text files without worrying about memory consumption since you **DO NOT** need to load the
+whole file into memory; all of this thanks to a very simple interface which has been there since
+Java 1.4!
 
-Not up to par with other tools you could use for such purposes yet. But reasonable enough that it is
-usable! For instance, searching all lines more than 10 characters long in a 800 MB file takes
-approximately 12 seconds on my machine (yielding 16 million matches). This is faster than `python`,
-and on par with `perl` but slower than the monstruously fast `grep` (3 seconds!!). This is of course
-using regexes; there _are_ faster ways to do this without regexes.
+## Versions
 
-### Warning about `.toString()`!
+The current version is **0.1.0**. Javadoc is [available online](http://fge.github.io/largetext/). It
+is available on Maven Central.
 
-This is the most expensive operation of them all, since when you get a `CharSequence`'s
-`.toString()`, you are supposed to get the contents of that `CharSequence`. Therefore a _very_ huge
-`String`...
+Using [gradle](http://gradle.org):
+
+```groovy
+dependencies {
+    compile(group: "com.github.fge", name: "largetext", version: "0.1.0");
+}
+```
+
+Using maven:
+
+```xml
+<dependency>
+    <groupId>com.github.fge</groupId>
+    <artifactId>largetext</artifactId>
+    <version>0.1.0</version>
+</dependency>
+```
+
+## Warning about `.toString()`!
+
+Yes, this very simple, seemingly innocuous method is this package's death trap. The `CharSequence`
+contract stipulates that its `.toString()` implementation must return a string whose length and
+contents are that of the sequence; but we deal here with files which can potentially contain
+_billions_ of charaters... And this means a billion character long string.
+
+Using `.toString()` will therefore more than likely result in an `OutOfMemory` error, not to mention
+such an error will be triggered after an inordinate amount of time... The current version does not
+deal with that, so, at this moment, the only thing I can say is:
+
+**DON'T DO THAT**
 
 Beware when debugging!
 
