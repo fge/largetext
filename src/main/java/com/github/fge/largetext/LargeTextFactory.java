@@ -21,6 +21,9 @@ package com.github.fge.largetext;
 import com.google.common.base.Preconditions;
 
 import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
+import javax.annotation.concurrent.Immutable;
+import javax.annotation.concurrent.NotThreadSafe;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
@@ -59,6 +62,8 @@ import java.util.Objects;
  * @see SizeUnit
  * @see LargeText
  */
+@Immutable
+@ParametersAreNonnullByDefault
 public final class LargeTextFactory
 {
     private final Charset charset;
@@ -113,6 +118,7 @@ public final class LargeTextFactory
     /**
      * A {@link com.github.fge.largetext.LargeTextFactory} builder
      */
+    @NotThreadSafe
     public static final class Builder
     {
         private static final long MIN_WINDOW_SIZE = 1024L;

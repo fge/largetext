@@ -18,6 +18,8 @@
 
 package com.github.fge.largetext;
 
+import javax.annotation.concurrent.Immutable;
+
 /**
  * Convenience enumeration of standard computing size units
  *
@@ -25,6 +27,7 @@ package com.github.fge.largetext;
  * either "real" (2^30, {@link SizeUnit#GiB}) or "false" (10^9, {@link
  * SizeUnit#GB}).</p>
  */
+@Immutable
 public enum SizeUnit
 {
     /**

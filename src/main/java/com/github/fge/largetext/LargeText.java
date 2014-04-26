@@ -24,6 +24,9 @@ import com.github.fge.largetext.load.TextRange;
 import com.github.fge.largetext.range.IntRange;
 import com.github.fge.largetext.sequence.CharSequenceFactory;
 
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
+import javax.annotation.concurrent.Immutable;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.CharBuffer;
@@ -59,6 +62,8 @@ import java.util.Map;
  *
  * @see LargeTextFactory
  */
+@Immutable
+@ParametersAreNonnullByDefault
 public final class LargeText
     implements CharSequence, Closeable
 {
@@ -148,6 +153,7 @@ public final class LargeText
      *
      * @return something veeery huge
      */
+    @Nonnull
     @Override
     public String toString()
     {

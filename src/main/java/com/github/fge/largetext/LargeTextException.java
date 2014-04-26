@@ -18,6 +18,11 @@
 
 package com.github.fge.largetext;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
+@ParametersAreNonnullByDefault
 public final class LargeTextException
     extends RuntimeException
 {
