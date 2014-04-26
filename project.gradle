@@ -14,7 +14,7 @@ project.ext {
  * List of dependencies
  */
 dependencies {
-    compile(group: "com.google.guava", name: "guava", version: "16.0.1");
+    compile(group: "com.google.guava", name: "guava", version: "17.0");
     compile(group: "com.google.code.findbugs", name: "jsr305",
         version: "2.0.3");
     testCompile(group: "org.testng", name: "testng", version: "6.8.7") {
