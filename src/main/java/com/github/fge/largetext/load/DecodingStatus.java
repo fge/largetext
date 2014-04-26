@@ -18,6 +18,8 @@
 
 package com.github.fge.largetext.load;
 
+import com.github.fge.largetext.LargeTextException;
+
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -52,7 +54,7 @@ final class DecodingStatus
     synchronized boolean addWaiter(final CharWaiter waiter)
     {
         if (exception != null)
-            throw new RuntimeException("decoding error", exception);
+            throw new LargeTextException("decoding error", exception);
         final int required = waiter.getRequired();
         if (required <= nrChars)
             return false;
@@ -61,7 +63,8 @@ final class DecodingStatus
             return true;
         }
         if (required > nrChars)
-            throw new ArrayIndexOutOfBoundsException(required);
+            throw new IndexOutOfBoundsException("out of bounds:" + required
+                + " characters requested but only " + nrChars + " available");
         return false;
     }
 
@@ -109,10 +112,10 @@ final class DecodingStatus
             endLatch.await();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("interrupted", e);
+            throw new LargeTextException("interrupted", e);
         }
         if (exception != null)
-            throw new RuntimeException("decoding error", exception);
+            throw new LargeTextException("decoding error", exception);
         return nrChars;
     }
 

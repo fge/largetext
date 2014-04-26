@@ -33,7 +33,7 @@ import java.util.Map;
  * Large text file character subsequence provider
  *
  * <p>This class is used both by {@link LargeText} and {@link
- * MultiTextRangeCharSequence}; even though they both <em>do</em> implement
+ * MultiRangeCharSequence}; even though they both <em>do</em> implement
  * {@link CharSequence}, they do not know how to produce subsequences of
  * themselves; they delegate such matters to this class.</p>
  *
@@ -60,7 +60,7 @@ public final class CharSequenceFactory
      *
      * <p>Depending on the requested range and window size, this will return
      * either a ({@link CharSequence#subSequence(int, int)} of a) {@link
-     * CharBuffer}, a {@link MultiTextRangeCharSequence}, or even {@link
+     * CharBuffer}, a {@link MultiRangeCharSequence}, or even {@link
      * EmptyCharSequence#INSTANCE} if the requested range is empty.</p>
      *
      * @param range the requested range of characters
@@ -87,6 +87,6 @@ public final class CharSequenceFactory
             builder.put(entry.getKey().getCharRange().asGuavaRange(),
                 entry.getValue());
 
-        return new MultiTextRangeCharSequence(this, range, builder.build());
+        return new MultiRangeCharSequence(this, range, builder.build());
     }
 }

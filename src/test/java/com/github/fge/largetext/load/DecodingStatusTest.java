@@ -18,6 +18,7 @@
 
 package com.github.fge.largetext.load;
 
+import com.github.fge.largetext.LargeTextException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -107,7 +108,7 @@ public final class DecodingStatusTest
         try {
             status.addWaiter(new CharWaiter(40));
             fail("I shouldn't have reached this point!");
-        } catch (ArrayIndexOutOfBoundsException ignored) {
+        } catch (IndexOutOfBoundsException ignored) {
             assertTrue(true);
         }
     }
@@ -127,7 +128,7 @@ public final class DecodingStatusTest
             future.get();
             fail("I shouldn't have reached this point!");
         } catch (ExecutionException e) {
-            assertTrue(e.getCause() instanceof ArrayIndexOutOfBoundsException);
+            assertTrue(e.getCause() instanceof IndexOutOfBoundsException);
         }
         executor.shutdownNow();
     }
@@ -140,7 +141,7 @@ public final class DecodingStatusTest
         try {
             status.addWaiter(new CharWaiter(0));
             fail("I shouldn't have reached this point!");
-        } catch (RuntimeException e) {
+        } catch (LargeTextException e) {
             assertSame(e.getCause(), exception);
         }
     }
@@ -162,7 +163,7 @@ public final class DecodingStatusTest
             fail("I shouldn't have reached this point!");
         } catch (ExecutionException e) {
             final Throwable cause = e.getCause();
-            assertTrue(cause instanceof RuntimeException);
+            assertTrue(cause instanceof LargeTextException);
             assertSame(cause.getCause(), exception);
         }
 

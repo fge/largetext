@@ -35,16 +35,16 @@ public enum EmptyCharSequence
     @Override
     public char charAt(final int index)
     {
-        throw new ArrayIndexOutOfBoundsException(index);
+        throw new IndexOutOfBoundsException(index + " index out of range");
     }
 
     @Override
     public CharSequence subSequence(final int start, final int end)
     {
         if (start != 0)
-            throw new ArrayIndexOutOfBoundsException(start);
+            throw new IndexOutOfBoundsException(start + " index out of range");
         if (end != 0)
-            throw new ArrayIndexOutOfBoundsException(end);
+            throw new IndexOutOfBoundsException(end + " index out of range");
         return this;
     }
 

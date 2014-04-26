@@ -23,6 +23,9 @@ import com.github.fge.largetext.range.IntRange;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
+import javax.annotation.concurrent.Immutable;
 import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,9 +37,13 @@ import java.util.Objects;
  *
  * <p>Don't use directly!</p>
  */
-public final class MultiTextRangeCharSequence
-    extends TextRangeCharSequence
+@Immutable
+@ParametersAreNonnullByDefault
+public final class MultiRangeCharSequence
+    implements CharSequence
 {
+    private final IntRange range;
+    private final int lowerBound;
     private final CharSequenceFactory factory;
     private final RangeMap<Integer, CharBuffer> rangeMap;
 
@@ -48,18 +55,21 @@ public final class MultiTextRangeCharSequence
      * @param range the requested <em>absolute</em> range
      * @param rangeMap map of absolute ranges and their matching char buffers
      */
-    public MultiTextRangeCharSequence(final CharSequenceFactory factory,
-        final IntRange range,
-        final RangeMap<Integer, CharBuffer> rangeMap)
+    public MultiRangeCharSequence(final CharSequenceFactory factory,
+        final IntRange range, final RangeMap<Integer, CharBuffer> rangeMap)
     {
-        super(range);
+        this.range = range;
+        lowerBound = range.getLowerBound();
         this.factory = factory;
         this.rangeMap = rangeMap;
     }
 
     @Override
-    protected char doCharAt(final int realIndex)
+    public char charAt(final int index)
     {
+        final int realIndex = index + lowerBound;
+        if (!range.contains(realIndex))
+            throw new IndexOutOfBoundsException(index + " out of range");
         final Map.Entry<Range<Integer>, CharBuffer> entry
             = rangeMap.getEntry(realIndex);
         Objects.requireNonNull(entry, "entry should not have been null here");
@@ -68,11 +78,28 @@ public final class MultiTextRangeCharSequence
     }
 
     @Override
-    protected CharSequence doSubSequence(final IntRange newRange)
+    public CharSequence subSequence(final int start, final int end)
     {
+        final IntRange newRange
+            = new IntRange(lowerBound + start, lowerBound + end);
+        if (!range.encloses(newRange))
+            throw new IndexOutOfBoundsException("illegal range requested: "
+                + newRange);
+        if (newRange.isEmpty())
+            return EmptyCharSequence.INSTANCE;
+        if (range.equals(newRange))
+            return this;
         return factory.getSequence(newRange);
     }
 
+    @Override
+    public int length()
+    {
+        // Since ranges are always closed at the end, this works
+        return range.getUpperBound() - lowerBound;
+    }
+
+    @Nonnull
     @Override
     public String toString()
     {

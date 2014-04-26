@@ -28,7 +28,7 @@
  *
  * <p>The {@link com.github.fge.largetext.sequence.CharSequenceFactory} class
  * is in charge of generating such sequences; in turn, it is used by {@link
- * com.github.fge.largetext.sequence.MultiTextRangeCharSequence} to obtain
+ * com.github.fge.largetext.sequence.MultiRangeCharSequence} to obtain
  * subsequences of itself. If the requested index range fits a single text
  * range, a {@link java.nio.CharBuffer} is returned directly, or a subsequence
  * of it.</p>

@@ -18,6 +18,8 @@
 
 package com.github.fge.largetext.load;
 
+import com.github.fge.largetext.LargeTextException;
+
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.PriorityQueue;
@@ -27,8 +29,8 @@ import java.util.concurrent.CountDownLatch;
  * A waiter on a number of available characters in a {@link TextDecoder}
  *
  * <p>When it is woken up, it will check for the status of the operation; it
- * will throw a {@link RuntimeException} if the decoding operation fails, or it
- * has waited to more characters than what is actually available.</p>
+ * will throw a {@link LargeTextException} if the decoding operation has failed,
+ * or it has waited to more characters than what is actually available.</p>
  *
  * <p>It implements {@link Comparable} since instances of this class are used in
  * a {@link PriorityQueue}.</p>
@@ -75,9 +77,10 @@ final class CharWaiter
     {
         latch.await();
         if (exception != null)
-            throw new RuntimeException("decoding error", exception);
+            throw new LargeTextException("decoding error", exception);
         if (nrChars < required)
-            throw new ArrayIndexOutOfBoundsException(required);
+            throw new IndexOutOfBoundsException("out of bounds:" + required
+                + " characters requested but only " + nrChars + " available");
     }
 
     void wakeUp()

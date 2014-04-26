@@ -19,6 +19,7 @@
 package com.github.fge.largetext.load;
 
 import com.github.fge.largetext.LargeText;
+import com.github.fge.largetext.LargeTextException;
 import com.github.fge.largetext.LargeTextFactory;
 import com.github.fge.largetext.range.IntRange;
 import com.google.common.collect.ImmutableList;
@@ -125,7 +126,7 @@ public final class TextDecoder
             needChars(charOffset + 1);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("Interrupted", e);
+            throw new LargeTextException("Interrupted", e);
         }
         synchronized (ranges) {
             return ranges.get(charOffset);
@@ -148,7 +149,7 @@ public final class TextDecoder
             needChars(range.getUpperBound());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("Interrupted", e);
+            throw new LargeTextException("Interrupted", e);
         }
         final Collection<TextRange> ret;
         synchronized (ranges) {
@@ -207,7 +208,7 @@ public final class TextDecoder
                 long byteOffset = 0L;
                 int charOffset = 0;
                 TextRange textRange;
-                boolean interrupted = false;
+                boolean interrupted;
 
                 while (byteOffset < fileSize) {
                     interrupted = Thread.currentThread().isInterrupted();

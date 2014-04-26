@@ -18,6 +18,7 @@
 
 package com.github.fge.largetext.load;
 
+import com.github.fge.largetext.LargeTextException;
 import com.github.fge.largetext.range.LongRange;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -102,7 +103,7 @@ public final class TextCache
         try {
             return cache.getAll(ranges);
         } catch (ExecutionException e) {
-            throw new RuntimeException("Unhandled exception", e.getCause());
+            throw new LargeTextException("Unhandled exception", e.getCause());
         }
     }
 

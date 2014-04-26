@@ -21,6 +21,15 @@ package com.github.fge.largetext;
 import javax.annotation.ParametersAreNonnullByDefault;
 import javax.annotation.concurrent.Immutable;
 
+/**
+ * {@link RuntimeException} specific to this package
+ *
+ * <p>This is the exception thrown on decoding errors, interruptions etc.</p>
+ *
+ * <p>It is pretty much required, because {@link CharSequence} does not account
+ * for potential interruptions (we cannot throw an {@link InterruptedException}
+ * nor failures (we can fail to decode a file).</p>
+ */
 @Immutable
 @ParametersAreNonnullByDefault
 public final class LargeTextException
