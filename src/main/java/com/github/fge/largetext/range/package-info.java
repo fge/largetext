@@ -34,8 +34,12 @@
  * <p>This was done using {@link
  * com.google.common.collect.Range#contains(Comparable)}, but since {@code
  * Range} does not have primitives as arguments, it was autoboxing the {@code
- * int} value each time; when this operation is called more than 100000 times
- * per <em>second</em>, the cost becomes significant. {@code IntRange}'s
- * {@code .contains()} does not do such autoboxing.</p>
+ * int} value each time; when this operation is called nearly a hundred million
+ * times per <em>second</em> in the worst case scenarios, the cost becomes
+ * significant. {@code IntRange}'s {@code .contains()} does not do such
+ * autoboxing (it does not have to).</p>
+ *
+ * <p>And while this makes things faster, the bigger gain is actually in memory
+ * usage!</p>
  */
 package com.github.fge.largetext.range;

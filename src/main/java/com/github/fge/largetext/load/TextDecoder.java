@@ -60,8 +60,8 @@ import java.util.concurrent.ThreadFactory;
  * <p>These methods are blocking, but they <em>do not</em> throw {@link
  * InterruptedException}; if an interruption occurs, these methods reset the
  * thread interruption status and throw the appropriate {@link
- * RuntimeException} (for instance, an {@link ArrayIndexOutOfBoundsException} if
- * the requested offset exceeds the number of characters in the file).</p>
+ * RuntimeException} (for instance, an {@link IndexOutOfBoundsException} if the
+ * requested offset exceeds the number of characters in the file).</p>
  *
  * <p>Implementation note: this class uses a <em>single threaded</em> {@link
  * ExecutorService} to perform the decoding operation. Decoding is not done in
@@ -116,9 +116,10 @@ public final class TextDecoder
      *
      * @param charOffset the offset
      * @return the appropriate {@link TextRange}
-     * @throws RuntimeException method has been interrupted, or a decoding error
+     * @throws LargeTextException method has been interrupted, or a decoding
+     * error
      * has occurred
-     * @throws ArrayIndexOutOfBoundsException offset requested is out of range
+     * @throws IndexOutOfBoundsException offset requested is out of range
      */
     public TextRange getRange(final int charOffset)
     {
@@ -138,10 +139,9 @@ public final class TextDecoder
      *
      * @param range  the range
      * @return the appropriate list of text ranges
-     * @throws RuntimeException method has been interrupted, or a decoding error
-     * has occurred
-     * @throws ArrayIndexOutOfBoundsException range is out of bounds for this
-     * decoder
+     * @throws LargeTextException method has been interrupted, or a decoding
+     * error has occurred
+     * @throws IndexOutOfBoundsException range is out of bounds for this decoder
      */
     public List<TextRange> getRanges(final IntRange range)
     {
@@ -166,8 +166,8 @@ public final class TextDecoder
      * successfully or with an error).</p>
      *
      * @return the total number of characters
-     * @throws RuntimeException method has been interrupted, or a decoding error
-     * has occurred
+     * @throws LargeTextException method has been interrupted, or a decoding
+     * error has occurred
      *
      * @see DecodingStatus#getTotalSize()
      */

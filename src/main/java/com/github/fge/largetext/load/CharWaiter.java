@@ -41,7 +41,7 @@ import java.util.concurrent.CountDownLatch;
  * @see DecodingStatus
  * @see TextDecoder#needChars(int)
  */
-final class CharWaiter
+public final class CharWaiter
     implements Comparable<CharWaiter>
 {
     private final int required;
@@ -50,29 +50,72 @@ final class CharWaiter
     private int nrChars = 0;
     private IOException exception = null;
 
-    CharWaiter(final int required)
+    /**
+     * Constructor
+     *
+     * @param required the number of required characters
+     */
+    public CharWaiter(final int required)
     {
         if (required < 0)
             throw new ArrayIndexOutOfBoundsException(required);
         this.required = required;
     }
 
-    void setNrChars(final int nrChars)
+    /**
+     * Set the number of decoded characters
+     *
+     * @param nrChars the number of characters
+     *
+     * @see DecodingStatus#setNrChars(int)
+     */
+    public void setNrChars(final int nrChars)
     {
         this.nrChars = nrChars;
     }
 
-    void setException(final IOException exception)
+    /**
+     * Set the decoding error if the decoding operation has failed
+     *
+     * @param exception the decoding error
+     *
+     * @see DecodingStatus#setFailed(IOException)
+     */
+    public void setException(final IOException exception)
     {
         this.exception = exception;
     }
 
-    int getRequired()
+    /**
+     * Get the number of characters required by this waiter
+     *
+     * @return the number of required characters
+     */
+    public int getRequired()
     {
         return required;
     }
 
-    void await()
+    /**
+     * Sleep waiting for the number of required characters to be available
+     *
+     * <p>On wakeup, if the thread has not been interrupted, two errors are
+     * possible:</p>
+     *
+     * <ul>
+     *     <li>the number of available chars is <em>less</em> than the number
+     *     of chars requested; in this case an {@link IndexOutOfBoundsException}
+     *     is thrown;</li>
+     *     <li>the decoding process has terminated with an error; in this case,
+     *     a {@link LargeTextException} is thrown, which cause is the error.
+     *     </li>
+     * </ul>
+     *
+     * @throws InterruptedException thread has been interrupted
+     * @throws IndexOutOfBoundsException see description
+     * @throws LargeTextException see description
+     */
+    public void await()
         throws InterruptedException
     {
         latch.await();
@@ -83,7 +126,12 @@ final class CharWaiter
                 + " characters requested but only " + nrChars + " available");
     }
 
-    void wakeUp()
+    /**
+     * Wake up this waiter
+     *
+     * <p>This is called by {@link DecodingStatus}.</p>
+     */
+    public void wakeUp()
     {
         latch.countDown();
     }
