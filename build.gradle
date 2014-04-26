@@ -16,6 +16,15 @@
  * - ASL 2.0: http://www.apache.org/licenses/LICENSE-2.0.txt
  */
 
+group = "com.github.fge";
+version = "0.1.0-SNAPSHOT";
+
+project.ext {
+    description = "A library for handling large text files as CharSequences";
+    sourceCompatibility = "1.7";
+    targetCompatibility = "1.7"; // defaults to sourceCompatibility
+};
+
 /*
  * This has to be here... It will not be taken into account in common.gradle!
  *
@@ -25,41 +34,48 @@
  */
 buildscript {
     repositories {
-        mavenCentral();
-        maven {
-            url "http://repo.springsource.org/plugins-release";
-        }
+        maven { url "http://repo.springsource.org/plugins-release" }
+        maven { url "http://repo.springsource.org/plugins-snapshot" }
     }
     dependencies {
-        classpath(group: "eu.appsatori", name: "gradle-fatjar-plugin",
-            version: "0.2-rc2");
-        classpath(group: "org.springframework.build.gradle",
-            name: "propdeps-plugin", version: "0.0.5");
+        classpath("org.springframework.build.gradle:propdeps-plugin:0.0.6-SNAPSHOT")
     }
 };
 
-//configure(allprojects) {
-//    apply(plugin: "propdeps");
-//    apply(plugin: "propdeps-maven");
-//    apply(plugin: "propdeps-idea");
-//    apply(plugin: "propdeps-eclipse");
-//}
+configure(allprojects) {
+    apply(plugin: "propdeps");
+    apply(plugin: "propdeps-maven");
+    apply(plugin: "propdeps-idea");
+    apply(plugin: "propdeps-eclipse");
+}
 
 apply(plugin: "java");
 apply(plugin: "maven");
 apply(plugin: "signing");
 apply(plugin: "osgi");
-apply(plugin: "fatjar");
 apply(plugin: "idea");
 apply(plugin: "eclipse");
-
-apply(from: "project.gradle");
 
 /*
  * Repositories to use
  */
 repositories {
     mavenCentral();
+}
+
+/*
+ * List of dependencies
+ */
+dependencies {
+    compile(group: "com.google.guava", name: "guava", version: "17.0");
+    provided(group: "com.google.code.findbugs", name: "jsr305",
+        version: "2.0.3");
+    testCompile(group: "org.testng", name: "testng", version: "6.8.7") {
+        exclude(group: "junit", module: "junit");
+        exclude(group: "org.beanshell", module: "bsh");
+        exclude(group: "org.yaml", module: "snakeyaml");
+    };
+    testCompile(group: "org.mockito", name: "mockito-core", version: "1.9.5");
 }
 
 /*
@@ -72,7 +88,6 @@ test {
     useTestNG() {
         useDefaultListeners = true;
     };
-    reports.html.enabled = false;
 }
 
 /*
@@ -97,15 +112,14 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir;
 }
 
-fatJar {
-    classifier = "full";
-}
+javadoc.options.links("http://docs.oracle.com/javase/7/docs/api/");
+javadoc.options.links("http://jsr-305.googlecode.com/svn/trunk/javadoc/");
+javadoc.options.links("http://docs.guava-libraries.googlecode.com/git-history/v16.0.1/javadoc/");
 
 artifacts {
     archives jar;
     archives sourcesJar;
     archives javadocJar;
-// bad idea:    archives fatJar;
 }
 
 task wrapper(type: Wrapper) {
