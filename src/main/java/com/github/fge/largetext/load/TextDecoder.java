@@ -207,8 +207,14 @@ public final class TextDecoder
                 long byteOffset = 0L;
                 int charOffset = 0;
                 TextRange textRange;
+                boolean interrupted = false;
 
                 while (byteOffset < fileSize) {
+                    interrupted = Thread.currentThread().isInterrupted();
+                    if (interrupted) {
+                        status.setFailed(new IOException("interrupted!"));
+                        break;
+                    }
                     try {
                         textRange = nextRange(byteOffset, charOffset, decoder,
                             charMap);
