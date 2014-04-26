@@ -24,23 +24,117 @@
     <title>largetext: use regexes on large text files</title>
 </head>
 <body>
-<h1>largetext: use regexes on large text files seamlessly</h1>
+<h1>largetext: use large text files as CharSequences</h1>
 
-<h2>Why</h2>
+<h1>Why</h1>
 
-<p>This is a toy project, really; it stemmed from a <a
+<p>This project started life as a proof of concept; it stemmed from a <a
 href="http://stackoverflow.com/q/22017480/1093528" target="_blank">discussion
-on StackOverflow</a>, where the user wanted to search for a pattern within large
-text files.</p>
+on StackOverflow</a>, where the user wanted to search for a pattern (using a
+{@link java.util.regex.Matcher} on a large text file.</p>
 
 <p>The suggested and accepted answer (mine) was to implement {@link
 java.lang.CharSequence} over such a large text file, since a {@link
-java.util.regex.Matcher} expects a <code>CharSequence</code> as an argument.</p>
+java.util.regex.Matcher} expects a <code>CharSequence</code> as an argument.
+This interface is implemented, among other things, by {@link java.lang.String}
+and {@link java.nio.CharBuffer}.</p>
 
-<p>And just for the heck of it, I decided to have a go at it, and this is the
-result! You can now use regexes over large text files (nearly) seamlessly.</p>
+<p>And now, {@link com.github.fge.largetext.LargeText} as well.</p>
 
-<h2>Sample usage</h2>
+<p>Note that this can not only be used with regexes: you can also use this
+project with <a href="https://github.com/parboiled1/grappa">Grappa</a>. Yes, you
+can use arbitrary grammars entirely in Java on large text files!</p>
+
+<h1>The challenge(s)</h1>
+
+<p>Implementing this did not go without a number of problems to solve; and most
+of these problems come from the {@link java.lang.CharSequence} interface
+itself. And to start with:</p>
+
+<h2>Querying operations might sleep</h2>
+
+<p>And <code>CharSequence</code> does not account for this; in fact, it pretty
+much assumes that all the characters you deal with are readily accessible, which
+is not the case here.</p>
+
+<p>As a consequence, you cannot throw {@link java.lang.InterruptedException}...
+It is therefore the responsibility of the implementation to deal correctly with
+that. Here, it is dealt with by terminating the relevant threads and throwing an
+unchecked exception: {@link com.github.fge.largetext.LargeTextException}.</p>
+
+<h2>Accesses may be concurrent, and anywhere in the sequence</h2>
+
+<p>While this is not strictly required by the interface, in practice this is the
+case: you can access any part of a <code>String</code> or
+<code>CharBuffer</code>, or query its length, in any number of threads,
+concurrently. <code>LargeText</code> must offer the same guarantees for it to
+pretend being a <code>CharSequence</code> at all.</p>
+
+<p>Also, accesses can be completely random. One thread can ask to read from
+the beginning of the sequence, the other at the middle, the other at the end.
+<code>LargeText</code> must be able to deal with that as well.</p>
+
+<p>And of course, there is the not so trivial problem of {@link
+java.lang.CharSequence#subSequence .subSequence()}.</p>
+
+<h2>Memory usage should be controlled -- and controllable</h2>
+
+<p>Dealing with large files of course has impacts on memory; if you use, say, a
+    2 GiB file, you don't want the whole of it to eat valuable heap space.</p>
+
+<p>The file must therefore be processed in chunks -- <em>without</em> altering
+    the "streamlineness" of <code>CharSequence</code> which has no such notions.</p>
+
+<h2>A decoding process is needed</h2>
+
+<p>And this problem is pretty much unique to largetext. Its source is not a
+character source but a <em>byte</em> source; what is more, said source can fail:
+I/O errors, unmappable byte sequence etc.</p>
+
+<p>Adding to that the fact that errors can happen at any moment. Fun!</p>
+
+<p>And about that byte vs char problem...</p>
+
+<h2>Character codings are often not fixed in length</h2>
+
+<p>Starting with the now universally (?) used UTF-8 character coding: a single
+Unicode character can be encoded using anywhere from one byte to four bytes.</p>
+
+<p>Which means you can experience "short reads" (an incomplete sequence) when
+decoding a given byte array within the source file. This also needs to be
+dealt with.</p>
+
+<p>And finally there is that:</p>
+
+<h2><code>.toString()!</code></h2>
+
+<p>Yes, the most trivial and normally innocuous operation on any Java object is
+a death trap with this package! The <a
+href="http://docs.oracle.com/javase/8/docs/api/java/lang/CharSequence.html#toString--"
+target="_blank">javadoc</a> of <code>CharSequence</code> says:</p>
+
+<blockquote>
+    Returns a string containing the characters in this sequence in the same
+    order as this sequence. <strong>The length of the string will be the length
+    of this sequence.</strong>
+</blockquote>
+
+<p>This means a string as large as a file which is potentially <em>several
+gigabytes in size</em>!</p>
+
+<p>There should therefore be an option to break this contract... You certainly
+don't want to be greeted with an {@link java.lang.OutOfMemoryError} just because
+you inadvertently used a <code>LargeText</code> instance in a string
+concatenation!</p>
+
+<h2>And, uh, is that all?</h2>
+
+<p>At least, that is the list of all the problems I could see. And largetext
+has a solution for each of them!</p>
+
+<h1>Using it</h1>
+
+<p>This is a bare bones, standard use of this API:</p>
 
 <pre>
     // Default factory: UTF-8 character encoding, 2 MiB window size
@@ -57,107 +151,89 @@ result! You can now use regexes over large text files (nearly) seamlessly.</p>
     }
 </pre>
 
-<p>The first thing you need to do is create a {@link
-com.github.fge.largetext.LargeTextFactory}. You can customize two parameters for
-an individual factory:</p>
+<p>The process is simple: create (and, if needed, configure) a {@link
+com.github.fge.largetext.LargeTextFactory}, grab a {@link java.nio.file.Path}
+to the file we want to use, create a {@link com.github.fge.largetext.LargeText}
+instance using this factory and path, and use it.</p>
 
-<ul>
-    <li>which character encoding to use when decoding the file (in Java, that is
-    a {@link java.nio.charset.Charset});</li>
-    <li>the size of individual <em>byte</em> windows to use when performing the
-    decoding operation.</li>
-</ul>
+<p>You will note the use of a try-with-resources statement.
+<code>LargeText</code> implements {@link java.io.Closeable} in addition to
+<code>CharSequence</code> and in order to not leak any resources (starting with
+the file descriptor), you must, at the very least, {@link
+java.io.Closeable#close() .close()} it!</p>
 
-<p>The first option is of course essential, since Java cannot know in advance
-what character encoding your file uses. The second option allows you to
-customize the amount of memory used in the decoding process and during the
-lifetime of the <code>LargeText</code> instance.</p>
+<p>The comment on the first line hints that the factory is configurable. Here is
+an example of it:</p>
 
-<p>Note that due to inherent limitations of Java classes, you will not be
-allowed to create windows larger than 2^31 - 1 bytes (that is,
-<code>Integer.MAX_VALUE</code>); also, there is a lower limit of 1024 bytes per
-window.</p>
+<pre>
+    // Create a factory with ISO-8859-15 encoding and a 12 MiB window size
+    final LargeTextFactory factory = LargeTextFactory.newBuilder()
+        .setCharsetByName("ISO-8859-15")
+        .setWindowSize(12, SizeUnit.MiB)
+        .build();
+</pre>
 
-<p>See the {@link com.github.fge.largetext.LargeTextFactory} documentation for
-customization options.</p>
+<p>The {@link
+com.github.fge.largetext.LargeTextFactory.Builder#setCharsetByName} method tells
+which character coding should be used when decoding the file contents, and the
+{@link com.github.fge.largetext.LargeTextFactory.Builder#setWindowSize} method
+tells how large a chunk of bytes the decoding process should use from the file.
+</p>
 
-<h2>How it works internally</h2>
+<p><strong>TODO: .toString() threshold!</strong></p>
 
-<h3>Foreword: the <code>CharSequence</code> interface...</h3>
+<h1>Short overview of the internals...</h1>
 
-<p>... Has no support for blocking operations; its contract does not account for
-failures in any of its defined methods, and with this package it is a real
-possibility...</p>
+<h2>The decoding process</h2>
 
-<p>As a result, all exceptions thrown by this package when the decoding/loading
-operations fail are <em>unchecked</em>.</p>
+<p>The decoding process is done with the {@link
+com.github.fge.largetext.load.TextDecoder} class; one instance of this class is
+created for each <code>LargeText</code> instance.</p>
 
-<h3>The decoding process</h3>
+<p>This class will create a background thread which is the real workhorse; it
+will not only (attempt to) decode the whole contents of the file, but
+it will also signal waiters (see below) to tell them that the number of
+characters they wanted is now available.</p>
 
-<p>When you initiate a <code>LargeText</code> instance, a background thread will
-perform the decoding operation, window by window; the size of this window is
-determined by your <code>LargeTextFactory</code>.</p>
+<h2>Caching character contents</h2>
 
-<p>When you call any method of a <code>CharSequence</code> on a
-<code>LargeText</code> instance, the method will block until the required
-number of characters have been decoded; this will be all of them for
-<code>.length()</code>, the required offset for <code>.charAt()</code>,
-or the upper bound for <code>.subSequence()</code>.</p>
+<p>The decoding process, by itself, will not cache anything, it is just here to
+ensure that at least this number of characters can be read from the file. The
+role of actually providing these characters is delegated to a {@link
+com.github.fge.largetext.load.TextCache}. The "unit" of a cached entry is a
+{@link com.github.fge.largetext.load.TextRange}, which maps a byte window of the
+input file to a character window.</p>
 
-<p>The decoding is performed using a {@link java.nio.charset.CharsetDecoder}.
-This decoder will attempt to decode one byte window into a suitable {@link
-java.nio.CharBuffer}. Each time a decoding operation completes successfully,
-all threads waiting for <code>n</code> characters where <code>n</code> is less
-than, or equal to, the number of successfully decoded characters at this point
-will be woken up.</p>
+<p>This cache loads character "windows" on demand, and has an expiry policy of
+30 seconds after last access; if no thread requires the same buffer within this
+delay, it is discarded from the cache.</p>
 
-<p>A dedicated waiter is produced for callers of the <code>.length()</code>
-method, shared between all callers, which will wait for the decoding operation
-to complete.</p>
+<h2>Dealing with potentially waiting operations...</h2>
 
-<p>In the event of a failure (either because of an I/O error, or because of an
-unmappable byte sequence) or an early thread interruption, an unchecked
-exception is thrown. If the failure is due to a requested offset being too
-large, an {@link java.lang.ArrayIndexOutOfBoundsException} is thrown.</p>
+<p>All operations from <code>CharSequence</code> can potentially wait for the
+required number of characters to be available; all of them for
+<code>.length()</code>, or part of them for <code>.charAt()</code> and
+<code>.subSequence()</code>.</p>
 
-<h2>{@code LargeText}</h2>
+<p>Callers of <code>.length()</code> will all share a same {@link
+java.util.concurrent.CountDownLatch} on which they will wait for the decoding
+process to wake them up.</p>
 
-<p>This is your "only" interface with the underlying text file, and unless the
-{@link java.util.regex.Matcher}, for instance, decides otherwise, also the
-only interface that it will use.</p>
+<p>For the two other operations, a {@link
+com.github.fge.largetext.load.CharWaiter} instance will be created; it will
+be queued <em>if and only if</em> the requested number of characters is not
+available at the time of the call. It will then be woken up when the number of
+requested character are available, or "greeted" with an exception if it is not
+(either because the requested index is out of range, or because the decoding
+process failed).</p>
 
-<p>There is one thing in particular that you should be aware of: <strong>the
- {@code toString()} operation is EXPENSIVE</strong>. A {@code CharSequence}'s
-.toString() is supposed to dump the whole content of it. With a {@code
-LargeText}, this basically means the whole file!</p>
+<h2>And there is more...</h2>
 
-<p>The other point of interest is that a {@code LargeText} caches the last
-character buffer that was requested by the caller; following the locality
-principle, chances are very high that the next requested character from it will
-be fulfillable by the buffer currently held. For performance reasons, this
-package also contains a simple, fast integer range: see {@link
-com.github.fge.largetext.range.IntRange}.</p>
+<p>All the nooks and crannies can not be explained in this single page; if you
+want to know more, you are encouraged to read the javadoc of all packages and
+classes!</p>
 
-<h2>Subsequence generation and text loading</h2>
-
-<p>The output of the decoding process is a {@link
-com.google.common.collect.RangeMap}, mapping character offsets to {@link
-com.github.fge.largetext.load.TextRange}s; using one <code>TextRange</code>,
-the {@link com.github.fge.largetext.load.TextCache} instance attached to the
-file then loads (if needed) the needed text from the file in a {@link
-java.nio.CharBuffer}.</p>
-
-<p>A <code>TextLoader</code> uses a {@link com.google.common.cache.LoadingCache}
-with an expiry policy of 30 seconds after last access; at the moment, this is
-not configurable (it will be in the future); but the net effect is that each
-"text zone" in the file is shared by all instances which need it at the same
-time.</p>
-
-<p>Finally, a subsequence may cover one or more text ranges. The {@link
-com.github.fge.largetext.sequence.CharSequenceFactory} instance will account for
-this and return the minimal sequence implementation needed by the caller (either
-a {@link com.github.fge.largetext.sequence.SingleTextRangeCharSequence} or a
-{@link com.github.fge.largetext.sequence.MultiTextRangeCharSequence}).</p>
+<p>Have fun!</p>
 
 </body>
 </html>
