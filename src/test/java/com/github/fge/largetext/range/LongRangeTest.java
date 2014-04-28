@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.*;
 
 public final class LongRangeTest
@@ -34,20 +35,33 @@ public final class LongRangeTest
     @Test
     public void cannotBuildIllegalRange()
     {
+        final String expected
+            = "upper bound must be greater than or equal to lower bound";
         try {
             new LongRange(30L, 20L);
             fail("No exception thrown!!");
         } catch (IllegalArgumentException e) {
-            assertEquals(e.getMessage(), "upper bound must be greater than or" +
-                " equal to lower bound");
+            final String actual = e.getMessage();
+            assertThat(actual).overridingErrorMessage(
+                "Wrong exception message!\nExpected: %s\nActual  : %s",
+                expected, actual
+            ).isEqualTo(expected);
         }
     }
 
     @Test
     public void rangeWithEqualLowerAndUpperBoundsIsEmpty()
     {
-        assertTrue(new LongRange(10L, 10L).isEmpty());
-        assertFalse(new LongRange(10L, 11L).isEmpty());
+        LongRange range;
+
+        range = new LongRange(10L, 10L);
+        assertThat(range.isEmpty()).overridingErrorMessage(
+            "Range %s was supposed to be empty!", range
+        ).isTrue();
+        range = new LongRange(10L, 11L);
+        assertThat(range.isEmpty()).overridingErrorMessage(
+            "Range %s was not supposed to be empty!", range
+        ).isFalse();
     }
 
     @DataProvider
@@ -67,19 +81,27 @@ public final class LongRangeTest
     public void enclosedRangesAreCorrectlyDetected(final LongRange other,
         final boolean expected)
     {
-        assertEquals(SAMPLE_RANGE.encloses(other), expected,
-            "range enclosing gives wrong result");
+        assertThat(SAMPLE_RANGE.encloses(other)).overridingErrorMessage(
+            "Range %s was%s supposed to enclose range %s, but it does%s",
+            SAMPLE_RANGE, expected ? "" : " NOT",
+            other, expected ? "n't": ""
+        ).isEqualTo(expected);
     }
 
     @Test
     public void cannotAppendIncompatibleRanges()
     {
+        final String expected = "lower bound of range in argument "
+            + "must be equal to this range's upper bound";
         try {
             SAMPLE_RANGE.append(new LongRange(9L, 10L));
             fail("No exception thrown!!");
         } catch (IllegalArgumentException e) {
-            assertEquals(e.getMessage(), "lower bound of range in argument " +
-                "must be equal to this range's upper bound");
+            final String actual = e.getMessage();
+            assertThat(actual).overridingErrorMessage(
+                "Wrong exception message!\nExpected: %s\nActual  : %s\n",
+                expected, actual
+            ).isEqualTo(expected);
         }
     }
 
@@ -88,6 +110,11 @@ public final class LongRangeTest
     {
         final LongRange other = new LongRange(8L, 29L);
         final LongRange expected = new LongRange(4L, 29L);
-        assertEquals(SAMPLE_RANGE.append(other), expected);
+        final LongRange actual = SAMPLE_RANGE.append(other);
+        assertThat(actual).overridingErrorMessage(
+            "Appending range %s to range %s gave wrong result\n"
+                + "Expected: %s\nActual  : %s\n", other, SAMPLE_RANGE,
+            expected, actual
+        ).isEqualTo(expected);
     }
 }
