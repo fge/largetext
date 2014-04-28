@@ -34,6 +34,7 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * A large text file as a {@link CharSequence}
@@ -67,6 +68,8 @@ import java.util.Map;
 public final class LargeText
     implements CharSequence, Closeable
 {
+    private static final Logger LOGGER
+        = Logger.getLogger(LargeText.class.getCanonicalName());
     private static final IntRange EMPTY_RANGE = new IntRange(0, 0);
     private static final CharBuffer EMPTY_BUFFER = CharBuffer.allocate(0);
     private static final ThreadLocal<CurrentBuffer> CURRENT
@@ -150,8 +153,12 @@ public final class LargeText
     public void close()
         throws IOException
     {
-        decoder.close();
-        channel.close();
+        try (
+            final TextDecoder thisDecoder = decoder;
+            final FileChannel thisChannel = channel;
+        ) {
+            LOGGER.fine("END; cache statistics: " + loader);
+        }
     }
 
     /**
