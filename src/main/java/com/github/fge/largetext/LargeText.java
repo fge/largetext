@@ -26,7 +26,6 @@ import com.github.fge.largetext.sequence.CharSequenceFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import javax.annotation.concurrent.ThreadSafe;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.CharBuffer;
@@ -63,25 +62,18 @@ import java.util.logging.Logger;
  *
  * @see LargeTextFactory
  */
-@ThreadSafe
 @ParametersAreNonnullByDefault
-public final class LargeText
+public abstract class LargeText
     implements CharSequence, Closeable
 {
     private static final Logger LOGGER
         = Logger.getLogger(LargeText.class.getCanonicalName());
-    private static final IntRange EMPTY_RANGE = new IntRange(0, 0);
-    private static final CharBuffer EMPTY_BUFFER = CharBuffer.allocate(0);
-    private static final ThreadLocal<CurrentBuffer> CURRENT
-        = new ThreadLocal<>();
-
-    static {
-        CURRENT.set(new CurrentBuffer(EMPTY_RANGE, EMPTY_BUFFER));
-    }
+    protected static final IntRange EMPTY_RANGE = new IntRange(0, 0);
+    protected static final CharBuffer EMPTY_BUFFER = CharBuffer.allocate(0);
 
     private final FileChannel channel;
-    private final TextDecoder decoder;
-    private final TextCache loader;
+    protected final TextDecoder decoder;
+    protected final TextCache loader;
     private final CharSequenceFactory factory;
 
     /**
@@ -97,7 +89,7 @@ public final class LargeText
      * @param sizeUnit the size unit
      * @throws IOException failed to build a decoder
      */
-    LargeText(final FileChannel channel, final Charset charset,
+    protected LargeText(final FileChannel channel, final Charset charset,
         final int quantity, final SizeUnit sizeUnit)
         throws IOException
     {
@@ -116,26 +108,13 @@ public final class LargeText
      * @return the number of `char`s in this file
      */
     @Override
-    public int length()
+    public final int length()
     {
         return decoder.getTotalChars();
     }
 
     @Override
-    public char charAt(final int index)
-    {
-        final CurrentBuffer buf = CURRENT.get();
-        if (buf.containsIndex(index))
-            return buf.charAt(index);
-        final TextRange textRange = decoder.getRange(index);
-        final IntRange range = textRange.getCharRange();
-        final CharBuffer buffer = loader.load(textRange);
-        CURRENT.set(new CurrentBuffer(range, buffer));
-        return buffer.charAt(index - range.getLowerBound());
-    }
-
-    @Override
-    public CharSequence subSequence(final int start, final int end)
+    public final CharSequence subSequence(final int start, final int end)
     {
         return factory.getSequence(new IntRange(start, end));
     }
@@ -150,7 +129,7 @@ public final class LargeText
      * FileChannel#close()}
      */
     @Override
-    public void close()
+    public final void close()
         throws IOException
     {
         try (
@@ -170,7 +149,7 @@ public final class LargeText
      */
     @Nonnull
     @Override
-    public String toString()
+    public final String toString()
     {
         final int len = length();
         final IntRange range = new IntRange(0, len);
@@ -180,27 +159,5 @@ public final class LargeText
         for (final CharBuffer buffer: map.values())
             sb.append(buffer);
         return sb.toString();
-    }
-
-    private static final class CurrentBuffer
-    {
-        private final IntRange range;
-        private final CharBuffer buffer;
-
-        private CurrentBuffer(final IntRange range, final CharBuffer buffer)
-        {
-            this.range = range;
-            this.buffer = buffer;
-        }
-
-        private boolean containsIndex(final int index)
-        {
-            return range.contains(index);
-        }
-
-        private char charAt(final int index)
-        {
-            return buffer.charAt(index - range.getLowerBound());
-        }
     }
 }

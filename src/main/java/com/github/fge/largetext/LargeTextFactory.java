@@ -20,7 +20,6 @@ package com.github.fge.largetext;
 
 import com.google.common.base.Preconditions;
 
-import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
@@ -106,19 +105,64 @@ public final class LargeTextFactory
      * the given path
      *
      * @see FileChannel#open(Path, OpenOption...)
+     *
+     * @deprecated use {@link #load(Path)} or {@link #loadThreadSafe(Path)}
+     * instead
      */
+    @Deprecated
     public LargeText fromPath(final Path path)
         throws IOException
     {
+        Objects.requireNonNull(path, "path must not be null");
         final FileChannel channel = FileChannel.open(path,
             StandardOpenOption.READ);
-        return new LargeText(channel, charset, quantity, sizeUnit);
+        return new NotThreadSafeLargeText(channel, charset, quantity, sizeUnit);
+    }
+
+    /**
+     * Obtain a non thread safe {@link LargeText} instance from a given {@link
+     * Path}
+     *
+     * @param path the path to use
+     * @return the large text instance
+     * @throws IOException failed to open a (read only) {@link FileChannel} for
+     * the given path
+     *
+     * @see FileChannel#open(Path, OpenOption...)
+     */
+    public LargeText load(final Path path)
+        throws IOException
+    {
+        Objects.requireNonNull(path, "path must not be null");
+        final FileChannel channel = FileChannel.open(path,
+            StandardOpenOption.READ);
+        return new NotThreadSafeLargeText(channel, charset, quantity, sizeUnit);
+    }
+
+    /**
+     * Obtain a thread safe {@link LargeText} instance from a given {@link Path}
+     *
+     * @param path the path to use
+     * @return the large text instance
+     * @throws IOException failed to open a (read only) {@link FileChannel} for
+     * the given path
+     *
+     * @see FileChannel#open(Path, OpenOption...)
+     */
+    public LargeText loadThreadSafe(final Path path)
+        throws IOException
+    {
+        Objects.requireNonNull(path, "path must not be null");
+        final FileChannel channel = FileChannel.open(path,
+            StandardOpenOption.READ);
+        return new ThreadSafeLargeText(channel, charset, quantity, sizeUnit);
     }
 
     /**
      * A {@link com.github.fge.largetext.LargeTextFactory} builder
      */
     @NotThreadSafe
+    @ParametersAreNonnullByDefault
     public static final class Builder
     {
         private static final long MIN_WINDOW_SIZE = 1024L;
@@ -139,7 +183,7 @@ public final class LargeTextFactory
          * @return this
          * @throws NullPointerException charset is null
          */
-        public Builder setCharset(@Nonnull final Charset charset)
+        public Builder setCharset(final Charset charset)
         {
             this.charset = Objects.requireNonNull(charset,
                 "charset cannot be null");
@@ -155,8 +199,9 @@ public final class LargeTextFactory
          *
          * @see Charset#forName(String)
          */
-        public Builder setCharsetByName(@Nonnull final String charsetByName)
+        public Builder setCharsetByName(final String charsetByName)
         {
+            Objects.requireNonNull(charsetByName, "charset must not be null");
             final Charset c = Charset.forName(charsetByName);
             return setCharset(c);
         }
@@ -174,11 +219,10 @@ public final class LargeTextFactory
          * @see SizeUnit
          */
         public Builder setWindowSize(final int quantity,
-            @Nonnull final SizeUnit sizeUnit)
+            final SizeUnit sizeUnit)
         {
-            if (quantity <= 0)
-                throw new IllegalArgumentException("window size must be " +
-                    "strictly positive");
+            Preconditions.checkArgument(quantity <= 0,
+                "window size must be strictly positive");
             this.quantity = quantity;
             this.sizeUnit = Objects.requireNonNull(sizeUnit,
                 "window size unit must not be null");

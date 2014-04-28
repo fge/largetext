@@ -18,13 +18,9 @@
 
 package com.github.fge.largetext;
 
-import com.github.fge.largetext.load.TextCache;
-import com.github.fge.largetext.load.TextDecoder;
 import com.github.fge.largetext.load.TextRange;
 import com.github.fge.largetext.range.IntRange;
-import com.github.fge.largetext.sequence.CharSequenceFactory;
 
-import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.io.Closeable;
@@ -32,9 +28,6 @@ import java.io.IOException;
 import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * A large text file as a {@link CharSequence}
@@ -66,56 +59,16 @@ import java.util.logging.Logger;
 @NotThreadSafe
 @ParametersAreNonnullByDefault
 public final class NotThreadSafeLargeText
-    implements CharSequence, Closeable
+    extends LargeText
 {
-    private static final Logger LOGGER
-        = Logger.getLogger(NotThreadSafeLargeText.class.getCanonicalName());
-    private static final IntRange EMPTY_RANGE = new IntRange(0, 0);
-    private static final CharBuffer EMPTY_BUFFER = CharBuffer.allocate(0);
-
-    private final FileChannel channel;
-    private final TextDecoder decoder;
-    private final TextCache loader;
-    private final CharSequenceFactory factory;
-
     private IntRange range = EMPTY_RANGE;
     private CharBuffer buffer = EMPTY_BUFFER;
 
-    /**
-     * Package local constructor
-     *
-     * <p>This constructor <strong>does not</strong> do any error checking on
-     * its argument; which is why you should really go through a {@link
-     * LargeTextFactory} instance instead!</p>
-     *
-     * @param channel the {@link FileChannel} to the (hopefully text) file
-     * @param charset the character encoding to use
-     * @param quantity the quantity of size units
-     * @param sizeUnit the size unit
-     * @throws IOException failed to build a decoder
-     */
     NotThreadSafeLargeText(final FileChannel channel, final Charset charset,
         final int quantity, final SizeUnit sizeUnit)
         throws IOException
     {
-        this.channel = channel;
-        final long windowSize = sizeUnit.sizeInBytes(quantity);
-        decoder = new TextDecoder(channel, charset, windowSize);
-        loader = new TextCache(channel, charset);
-        factory = new CharSequenceFactory(decoder, loader);
-    }
-
-    /**
-     * Obtain this file's length in {@code char}s (NOT code points!)
-     *
-     * <p>What is does is call {@link TextDecoder#getTotalChars()}.</p>
-     *
-     * @return the number of `char`s in this file
-     */
-    @Override
-    public int length()
-    {
-        return decoder.getTotalChars();
+        super(channel, charset, quantity, sizeUnit);
     }
 
     @Override
@@ -127,53 +80,5 @@ public final class NotThreadSafeLargeText
             buffer = loader.load(textRange);
         }
         return buffer.charAt(index - range.getLowerBound());
-    }
-
-    @Override
-    public CharSequence subSequence(final int start, final int end)
-    {
-        return factory.getSequence(new IntRange(start, end));
-    }
-
-    /**
-     * Close this instance
-     *
-     * <p>This closes the embedded {@link TextDecoder}, and then the {@link
-     * FileChannel} associated with the file.</p>
-     *
-     * @throws IOException see {@link TextDecoder#close()} and {@link
-     * FileChannel#close()}
-     */
-    @Override
-    public void close()
-        throws IOException
-    {
-        try (
-            final TextDecoder thisDecoder = decoder;
-            final FileChannel thisChannel = channel;
-        ) {
-            LOGGER.fine("END; cache statistics: " + loader);
-        }
-    }
-
-    /**
-     * *gasp* the whole instance as a string...
-     *
-     * <p>Basically this is a string representing the whole text file!</p>
-     *
-     * @return something veeery huge
-     */
-    @Nonnull
-    @Override
-    public String toString()
-    {
-        final int len = length();
-        final IntRange range = new IntRange(0, len);
-        final List<TextRange> textRanges = decoder.getRanges(range);
-        final Map<TextRange, CharBuffer> map = loader.loadAll(textRanges);
-        final StringBuilder sb = new StringBuilder(len);
-        for (final CharBuffer buffer: map.values())
-            sb.append(buffer);
-        return sb.toString();
     }
 }
