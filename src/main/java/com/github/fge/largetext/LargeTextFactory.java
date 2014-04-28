@@ -221,7 +221,7 @@ public final class LargeTextFactory
         public Builder setWindowSize(final int quantity,
             final SizeUnit sizeUnit)
         {
-            Preconditions.checkArgument(quantity <= 0,
+            Preconditions.checkArgument(quantity > 0,
                 "window size must be strictly positive");
             this.quantity = quantity;
             this.sizeUnit = Objects.requireNonNull(sizeUnit,
