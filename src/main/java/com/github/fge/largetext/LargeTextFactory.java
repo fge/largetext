@@ -57,6 +57,13 @@ import java.util.Objects;
  * <p>The defaults are to use UTF-8 ({@link StandardCharsets#UTF_8}) as a
  * character encoding, and a 2 MiB window size.</p>
  *
+ * <p>You have the choice of creating either a non thread safe version (using
+ * {@link #load(Path)}) or a thread safe version (using {@link
+ * #loadThreadSafe(Path)}). Note that the thread safe version incurs a
+ * performance penalty of 40% at worst on {@link LargeText#charAt(int)} calls
+ * (it uses a {@link ThreadLocal} variable from which it must {@code .get()}
+ * before doing the actual character lookup).</p>
+ *
  * @see LargeTextFactory.Builder
  * @see SizeUnit
  * @see LargeText

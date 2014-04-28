@@ -21,6 +21,7 @@ package com.github.fge.largetext;
 import com.google.common.base.Strings;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.BufferedWriter;
@@ -29,11 +30,14 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public final class ThreadSafeLargeTextTest
+public final class NotThreadSafeLargeTextTest
 {
     private final String testString = Strings.repeat("abcdefghij", 5000);
     private final int len = testString.length();
@@ -59,13 +63,24 @@ public final class ThreadSafeLargeTextTest
         final LargeTextFactory factory = LargeTextFactory.newBuilder()
             .setWindowSize(16, SizeUnit.KiB)
             .build();
-        largeText = factory.loadThreadSafe(testFile);
+        largeText = factory.load(testFile);
     }
 
-    @Test(threadPoolSize = 30, invocationCount = 200)
-    public void threadSafeTextFileActuallyIs()
+    @DataProvider
+    public Iterator<Object[]> getIndices()
     {
-        final int index = random.nextInt(len);
+        final List<Object[]> list = new ArrayList<>();
+
+        for (int i = 0; i < 200; i++)
+            list.add(new Object[] { random.nextInt(len) });
+
+        return list.iterator();
+    }
+
+
+    @Test(dataProvider = "getIndices")
+    public void nonThreadSafeLargeTextWorks(final int index)
+    {
         final char actual = largeText.charAt(index);
         final char expected = testString.charAt(index);
         assertThat(actual).overridingErrorMessage(
@@ -81,4 +96,5 @@ public final class ThreadSafeLargeTextTest
         largeText.close();
         Files.delete(testFile);
     }
+
 }
