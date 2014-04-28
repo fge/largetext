@@ -33,6 +33,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.*;
 
 public final class DecodingStatusTest
@@ -75,7 +76,9 @@ public final class DecodingStatusTest
         }
 
         executor.shutdownNow();
-        assertFalse(future.get());
+        assertThat(future.get()).overridingErrorMessage(
+            "Waiter should have failed but succeeded??"
+        ).isFalse();
     }
 
     @Test
@@ -89,7 +92,9 @@ public final class DecodingStatusTest
 
         status.setNrChars(40);
 
-        assertTrue(future.get());
+        assertThat(future.get()).overridingErrorMessage(
+            "Our CharWaiter failed to wake up in time!"
+        ).isTrue();
         executor.shutdownNow();
     }
 
@@ -98,7 +103,9 @@ public final class DecodingStatusTest
     {
         status.setNrChars(30);
         final CharWaiter waiter = new CharWaiter(20);
-        assertFalse(status.addWaiter(waiter));
+        assertThat(status.addWaiter(waiter)).overridingErrorMessage(
+            "CharWaiter added to the queue whereas it shouldn't have!"
+        ).isFalse();
     }
 
     @Test
@@ -142,7 +149,9 @@ public final class DecodingStatusTest
             status.addWaiter(new CharWaiter(0));
             fail("I shouldn't have reached this point!");
         } catch (LargeTextException e) {
-            assertSame(e.getCause(), exception);
+            assertThat(e.getCause()).overridingErrorMessage(
+                "cause is not what was expected!"
+            ).isSameAs(exception);
         }
     }
 
@@ -163,8 +172,12 @@ public final class DecodingStatusTest
             fail("I shouldn't have reached this point!");
         } catch (ExecutionException e) {
             final Throwable cause = e.getCause();
-            assertTrue(cause instanceof LargeTextException);
-            assertSame(cause.getCause(), exception);
+            assertThat(cause).overridingErrorMessage(
+                "Wrong instance type for throwable!"
+            ).isInstanceOf(LargeTextException.class);
+            assertThat(cause.getCause()).overridingErrorMessage(
+                "cause is not what was expected!"
+            ).isSameAs(exception);
         }
 
         executor.shutdownNow();
