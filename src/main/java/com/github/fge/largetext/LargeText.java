@@ -33,6 +33,7 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 /**
@@ -110,7 +111,10 @@ public abstract class LargeText
         final int quantity, final SizeUnit sizeUnit)
         throws IOException
     {
-        this.channel = channel;
+        this.channel = Objects.requireNonNull(channel,
+            "file channel cannot be null");
+        Objects.requireNonNull(charset, "charset cannot be null");
+        Objects.requireNonNull(sizeUnit, "size unit cannot be null");
         final long windowSize = sizeUnit.sizeInBytes(quantity);
         decoder = new TextDecoder(channel, charset, windowSize);
         loader = new TextCache(channel, charset);

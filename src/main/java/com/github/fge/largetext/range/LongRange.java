@@ -21,7 +21,8 @@ package com.github.fge.largetext.range;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Range;
 
-import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import javax.annotation.concurrent.Immutable;
 import java.util.Objects;
 
@@ -36,6 +37,7 @@ import java.util.Objects;
  * only has a limited set of methods.</p>
  */
 @Immutable
+@ParametersAreNonnullByDefault
 public final class LongRange
 {
     private final long lowerBound;
@@ -106,7 +108,7 @@ public final class LongRange
      * @return true if the bounds of the other range are within the
      * bounds of this range
      */
-    public boolean encloses(@Nonnull final LongRange other)
+    public boolean encloses(final LongRange other)
     {
         Objects.requireNonNull(other, "argument cannot be null");
         return lowerBound <= other.lowerBound && upperBound >= other.upperBound;
@@ -123,7 +125,7 @@ public final class LongRange
      * @return a <strong>new</strong> {@code IntRange} instance (since this
      * class is immutable)
      */
-    public LongRange append(@Nonnull final LongRange other)
+    public LongRange append(final LongRange other)
     {
         Objects.requireNonNull(other, "argument cannot be null");
         Preconditions.checkArgument(upperBound == other.lowerBound, "lower " +
@@ -139,7 +141,7 @@ public final class LongRange
     }
 
     @Override
-    public boolean equals(final Object obj)
+    public boolean equals(@Nullable final Object obj)
     {
         if (obj == null)
             return false;

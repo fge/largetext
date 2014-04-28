@@ -18,9 +18,12 @@
 
 package com.github.fge.largetext.sequence;
 
+import javax.annotation.concurrent.Immutable;
+
 /**
  * An empty (0-length) character sequence
  */
+@Immutable
 public enum EmptyCharSequence
     implements CharSequence
 {

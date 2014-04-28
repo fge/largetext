@@ -58,10 +58,12 @@ public final class MultiRangeCharSequence
     public MultiRangeCharSequence(final CharSequenceFactory factory,
         final IntRange range, final RangeMap<Integer, CharBuffer> rangeMap)
     {
-        this.range = range;
+        this.range = Objects.requireNonNull(range, "range cannot be null");
         lowerBound = range.getLowerBound();
-        this.factory = factory;
-        this.rangeMap = rangeMap;
+        this.factory = Objects.requireNonNull(factory,
+            "factory cannot be null");
+        this.rangeMap = Objects.requireNonNull(rangeMap,
+            "range map cannot be null");
     }
 
     @Override
@@ -118,5 +120,4 @@ public final class MultiRangeCharSequence
         final int end = range.getUpperBound() - first.lowerEndpoint();
         return sb.subSequence(start, end).toString();
     }
-
 }
