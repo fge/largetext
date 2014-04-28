@@ -20,7 +20,7 @@ package com.github.fge.largetext;
 
 import com.google.common.base.Preconditions;
 
-import javax.annotation.ParametersAreNonnullByDefault;
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.io.IOException;
@@ -69,7 +69,6 @@ import java.util.Objects;
  * @see LargeText
  */
 @Immutable
-@ParametersAreNonnullByDefault
 public final class LargeTextFactory
 {
     private final Charset charset;
@@ -117,7 +116,7 @@ public final class LargeTextFactory
      * instead
      */
     @Deprecated
-    public LargeText fromPath(final Path path)
+    public LargeText fromPath(@Nonnull final Path path)
         throws IOException
     {
         Objects.requireNonNull(path, "path must not be null");
@@ -137,7 +136,7 @@ public final class LargeTextFactory
      *
      * @see FileChannel#open(Path, OpenOption...)
      */
-    public LargeText load(final Path path)
+    public LargeText load(@Nonnull final Path path)
         throws IOException
     {
         Objects.requireNonNull(path, "path must not be null");
@@ -156,7 +155,7 @@ public final class LargeTextFactory
      *
      * @see FileChannel#open(Path, OpenOption...)
      */
-    public LargeText loadThreadSafe(final Path path)
+    public LargeText loadThreadSafe(@Nonnull final Path path)
         throws IOException
     {
         Objects.requireNonNull(path, "path must not be null");
@@ -169,7 +168,6 @@ public final class LargeTextFactory
      * A {@link com.github.fge.largetext.LargeTextFactory} builder
      */
     @NotThreadSafe
-    @ParametersAreNonnullByDefault
     public static final class Builder
     {
         private static final long MIN_WINDOW_SIZE = 1024L;
@@ -190,7 +188,7 @@ public final class LargeTextFactory
          * @return this
          * @throws NullPointerException charset is null
          */
-        public Builder setCharset(final Charset charset)
+        public Builder setCharset(@Nonnull final Charset charset)
         {
             this.charset = Objects.requireNonNull(charset,
                 "charset cannot be null");
@@ -206,7 +204,7 @@ public final class LargeTextFactory
          *
          * @see Charset#forName(String)
          */
-        public Builder setCharsetByName(final String charsetByName)
+        public Builder setCharsetByName(@Nonnull final String charsetByName)
         {
             Objects.requireNonNull(charsetByName, "charset must not be null");
             final Charset c = Charset.forName(charsetByName);
@@ -226,7 +224,7 @@ public final class LargeTextFactory
          * @see SizeUnit
          */
         public Builder setWindowSize(final int quantity,
-            final SizeUnit sizeUnit)
+            @Nonnull final SizeUnit sizeUnit)
         {
             Preconditions.checkArgument(quantity > 0,
                 "window size must be strictly positive");
