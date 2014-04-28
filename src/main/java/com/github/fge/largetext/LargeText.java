@@ -26,7 +26,7 @@ import com.github.fge.largetext.sequence.CharSequenceFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import javax.annotation.concurrent.NotThreadSafe;
+import javax.annotation.concurrent.ThreadSafe;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.CharBuffer;
@@ -62,18 +62,24 @@ import java.util.Map;
  *
  * @see LargeTextFactory
  */
-@NotThreadSafe
+@ThreadSafe
 @ParametersAreNonnullByDefault
 public final class LargeText
     implements CharSequence, Closeable
 {
+    private static final IntRange EMPTY_RANGE = new IntRange(0, 0);
+    private static final CharBuffer EMPTY_BUFFER = CharBuffer.allocate(0);
+    private static final ThreadLocal<CurrentBuffer> CURRENT
+        = new ThreadLocal<>();
+
+    static {
+        CURRENT.set(new CurrentBuffer(EMPTY_RANGE, EMPTY_BUFFER));
+    }
+
     private final FileChannel channel;
     private final TextDecoder decoder;
     private final TextCache loader;
     private final CharSequenceFactory factory;
-
-    private IntRange currentRange = new IntRange(0, 0);
-    private CharBuffer currentBuffer = CharBuffer.allocate(0);
 
     /**
      * Package local constructor
@@ -115,12 +121,14 @@ public final class LargeText
     @Override
     public char charAt(final int index)
     {
-        if (!currentRange.contains(index)) {
-            final TextRange textRange = decoder.getRange(index);
-            currentRange = textRange.getCharRange();
-            currentBuffer = loader.load(textRange);
-        }
-        return currentBuffer.charAt(index - currentRange.getLowerBound());
+        final CurrentBuffer buf = CURRENT.get();
+        if (buf.containsIndex(index))
+            return buf.charAt(index);
+        final TextRange textRange = decoder.getRange(index);
+        final IntRange range = textRange.getCharRange();
+        final CharBuffer buffer = loader.load(textRange);
+        CURRENT.set(new CurrentBuffer(range, buffer));
+        return buffer.charAt(index - range.getLowerBound());
     }
 
     @Override
@@ -165,5 +173,27 @@ public final class LargeText
         for (final CharBuffer buffer: map.values())
             sb.append(buffer);
         return sb.toString();
+    }
+
+    private static final class CurrentBuffer
+    {
+        private final IntRange range;
+        private final CharBuffer buffer;
+
+        private CurrentBuffer(final IntRange range, final CharBuffer buffer)
+        {
+            this.range = range;
+            this.buffer = buffer;
+        }
+
+        private boolean containsIndex(final int index)
+        {
+            return range.contains(index);
+        }
+
+        private char charAt(final int index)
+        {
+            return buffer.charAt(index - range.getLowerBound());
+        }
     }
 }
