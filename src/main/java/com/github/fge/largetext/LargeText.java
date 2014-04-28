@@ -36,10 +36,28 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * A large text file as a {@link CharSequence}
+ * A large text file as a {@link CharSequence}: base abstract class
  *
- * <p>Do not create an instance of this class directly; instead, use a {@link
- * LargeTextFactory}.</p>
+ * <p>There are two possible versions: a non thread safe version and a thread
+ * safe version. Expect a performance drop of 40% in the worst case scenario
+ * if you use a thread safe version.</p>
+ *
+ * <p>The reason for the two different implementations is that this class
+ * implements the principle of locality: when a caller calls {@link
+ * CharSequence#charAt(int)}, chances are high that the next call to this method
+ * will hit the same {@link TextRange}. As such, the class keeps the last loaded
+ * text range and its matching buffer "at hand". The difference between the two
+ * implementations is how these two elements are retained:</p>
+ *
+ * <ul>
+ *     <li>in the non thread safe version, those are simple,
+ *     non-{@code volatile}, instance variables;</li>
+ *     <li>in the thread safe version, those are in a {@link ThreadLocal} inner
+ *     class instance.</li>
+ * </ul>
+ *
+ * <p>All other methods of {@link CharSequence} are implemented directly by this
+ * class and are not overridable.</p>
  *
  * <p><strong>Important note!</strong> This class implements {@link Closeable}
  * (and therefore {@link AutoCloseable}); the recommended use is therefore to
@@ -47,7 +65,8 @@ import java.util.logging.Logger;
  *
  * <pre>
  *     try (
- *         final LargeText largeText = factory.fromPath(somePath);
+ *         final LargeText largeText = factory.load(somePath);
+ *         // or factory.loadThreadSafe(somePath)
  *     ) {
  *         // use "largeText" here
  *     }
@@ -61,6 +80,8 @@ import java.util.logging.Logger;
  * dumps <strong>the contents of the whole file!</strong></p>
  *
  * @see LargeTextFactory
+ * @see NotThreadSafeLargeText
+ * @see ThreadSafeLargeText
  */
 @ParametersAreNonnullByDefault
 public abstract class LargeText
@@ -77,11 +98,7 @@ public abstract class LargeText
     private final CharSequenceFactory factory;
 
     /**
-     * Package local constructor
-     *
-     * <p>This constructor <strong>does not</strong> do any error checking on
-     * its argument; which is why you should really go through a {@link
-     * LargeTextFactory} instance instead!</p>
+     * The only protected constructor
      *
      * @param channel the {@link FileChannel} to the (hopefully text) file
      * @param charset the character encoding to use
@@ -113,6 +130,16 @@ public abstract class LargeText
         return decoder.getTotalChars();
     }
 
+    /**
+     * Obtain a subsequence from this sequence
+     *
+     * <p>Calls to this method are delegated to a {@link CharSequenceFactory}.
+     * </p>
+     *
+     * @param start the starting index of the subsequence (inclusive)
+     * @param end the end index of the subsequence (exclusive)
+     * @return a subsequence
+     */
     @Override
     public final CharSequence subSequence(final int start, final int end)
     {

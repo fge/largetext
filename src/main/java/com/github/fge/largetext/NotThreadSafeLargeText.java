@@ -23,38 +23,22 @@ import com.github.fge.largetext.range.IntRange;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import javax.annotation.concurrent.NotThreadSafe;
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 
 /**
- * A large text file as a {@link CharSequence}
+ * A large text file as a {@link CharSequence}: non thread safe version
  *
- * <p>Do not create an instance of this class directly; instead, use a {@link
- * LargeTextFactory}.</p>
+ * <p>Despite the not really reassuring name, this is the class you will use the
+ * most often.</p>
  *
- * <p><strong>Important note!</strong> This class implements {@link Closeable}
- * (and therefore {@link AutoCloseable}); the recommended use is therefore to
- * use it in a try-with-resources statement:</p>
+ * <p>This class's {@code .charAt()} uses regular instance variables to store
+ * the current text range and text buffer.</p>
  *
- * <pre>
- *     try (
- *         final LargeText largeText = factory.fromPath(somePath);
- *     ) {
- *         // use "largeText" here
- *     }
- * </pre>
- *
- * <p>Failing to close the instance correctly means you leak a file descriptor
- * to the text file you are using!</p>
- *
- * <p><strong>BIG FAT WARNING:</strong> getting the contents of a {@code
- * CharSequence} as a {@link String} using {@link Object#toString()} basically
- * dumps <strong>the contents of the whole file!</strong></p>
- *
- * @see LargeTextFactory
+ * @see LargeTextFactory#load(Path)
  */
 @NotThreadSafe
 @ParametersAreNonnullByDefault
