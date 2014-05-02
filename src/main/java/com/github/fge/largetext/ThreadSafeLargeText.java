@@ -20,7 +20,6 @@ package com.github.fge.largetext;
 
 import com.github.fge.largetext.load.TextRange;
 import com.github.fge.largetext.range.IntRange;
-import com.google.common.base.Optional;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import javax.annotation.concurrent.ThreadSafe;
@@ -48,10 +47,17 @@ import java.nio.file.Path;
 public final class ThreadSafeLargeText
     extends LargeText
 {
-    private static final ThreadLocal<CurrentBuffer> CURRENT
-        = new ThreadLocal<>();
     private static final CurrentBuffer EMPTY_BUF
         = new CurrentBuffer(EMPTY_RANGE, EMPTY_BUFFER);
+    private static final ThreadLocal<CurrentBuffer> CURRENT
+        = new ThreadLocal<CurrentBuffer>()
+        {
+            @Override
+            protected CurrentBuffer initialValue()
+            {
+                return EMPTY_BUF;
+            }
+        };
 
     ThreadSafeLargeText(final FileChannel channel, final Charset charset,
         final int quantity, final SizeUnit sizeUnit)
@@ -63,8 +69,7 @@ public final class ThreadSafeLargeText
     @Override
     public char charAt(final int index)
     {
-        final CurrentBuffer buf = Optional.fromNullable(CURRENT.get())
-            .or(EMPTY_BUF);
+        final CurrentBuffer buf = CURRENT.get();
         if (buf.containsIndex(index))
             return buf.charAt(index);
         final TextRange textRange = decoder.getRange(index);
