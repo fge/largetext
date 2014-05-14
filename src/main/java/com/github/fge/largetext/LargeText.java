@@ -23,6 +23,7 @@ import com.github.fge.largetext.load.TextDecoder;
 import com.github.fge.largetext.load.TextRange;
 import com.github.fge.largetext.range.IntRange;
 import com.github.fge.largetext.sequence.CharSequenceFactory;
+import com.google.common.base.Preconditions;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -33,7 +34,6 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.logging.Logger;
 
 /**
@@ -111,10 +111,10 @@ public abstract class LargeText
         final int quantity, final SizeUnit sizeUnit)
         throws IOException
     {
-        this.channel = Objects.requireNonNull(channel,
+        this.channel = Preconditions.checkNotNull(channel,
             "file channel cannot be null");
-        Objects.requireNonNull(charset, "charset cannot be null");
-        Objects.requireNonNull(sizeUnit, "size unit cannot be null");
+        Preconditions.checkNotNull(charset, "charset cannot be null");
+        Preconditions.checkNotNull(sizeUnit, "size unit cannot be null");
         final long windowSize = sizeUnit.sizeInBytes(quantity);
         decoder = new TextDecoder(channel, charset, windowSize);
         loader = new TextCache(channel, charset);

@@ -20,6 +20,8 @@ package com.github.fge.largetext.sequence;
 
 import com.github.fge.largetext.load.TextRange;
 import com.github.fge.largetext.range.IntRange;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 
@@ -30,7 +32,6 @@ import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * A {@link CharSequence} spanning more than one {@link TextRange}
@@ -58,11 +59,11 @@ public final class MultiRangeCharSequence
     public MultiRangeCharSequence(final CharSequenceFactory factory,
         final IntRange range, final RangeMap<Integer, CharBuffer> rangeMap)
     {
-        this.range = Objects.requireNonNull(range, "range cannot be null");
+        this.range = Preconditions.checkNotNull(range, "range cannot be null");
         lowerBound = range.getLowerBound();
-        this.factory = Objects.requireNonNull(factory,
+        this.factory = Preconditions.checkNotNull(factory,
             "factory cannot be null");
-        this.rangeMap = Objects.requireNonNull(rangeMap,
+        this.rangeMap = Preconditions.checkNotNull(rangeMap,
             "range map cannot be null");
     }
 
@@ -74,7 +75,8 @@ public final class MultiRangeCharSequence
             throw new IndexOutOfBoundsException(index + " out of range");
         final Map.Entry<Range<Integer>, CharBuffer> entry
             = rangeMap.getEntry(realIndex);
-        Objects.requireNonNull(entry, "entry should not have been null here");
+        Preconditions.checkNotNull(entry,
+            "entry should not have been null here");
         final int offset = entry.getKey().lowerEndpoint();
         return entry.getValue().charAt(realIndex - offset);
     }

@@ -23,6 +23,7 @@ import com.github.fge.largetext.load.TextCache;
 import com.github.fge.largetext.load.TextDecoder;
 import com.github.fge.largetext.load.TextRange;
 import com.github.fge.largetext.range.IntRange;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableRangeMap;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -30,7 +31,6 @@ import javax.annotation.concurrent.Immutable;
 import java.nio.CharBuffer;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Large text file character subsequence provider
@@ -73,7 +73,7 @@ public final class CharSequenceFactory
      */
     public CharSequence getSequence(final IntRange range)
     {
-        Objects.requireNonNull(range, "range cannot be null");
+        Preconditions.checkNotNull(range, "range cannot be null");
         if (range.isEmpty())
             return EmptyCharSequence.INSTANCE;
         final List<TextRange> textRanges = decoder.getRanges(range);

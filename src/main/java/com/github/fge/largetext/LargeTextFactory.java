@@ -30,7 +30,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Objects;
 
 /**
  * Factory to obtain {@link LargeText} instances
@@ -139,7 +138,7 @@ public final class LargeTextFactory
     public LargeText load(@Nonnull final Path path)
         throws IOException
     {
-        Objects.requireNonNull(path, "path must not be null");
+        Preconditions.checkNotNull(path, "path must not be null");
         final FileChannel channel = FileChannel.open(path,
             StandardOpenOption.READ);
         return new NotThreadSafeLargeText(channel, charset, quantity, sizeUnit);
@@ -158,7 +157,7 @@ public final class LargeTextFactory
     public LargeText loadThreadSafe(@Nonnull final Path path)
         throws IOException
     {
-        Objects.requireNonNull(path, "path must not be null");
+        Preconditions.checkNotNull(path, "path must not be null");
         final FileChannel channel = FileChannel.open(path,
             StandardOpenOption.READ);
         return new ThreadSafeLargeText(channel, charset, quantity, sizeUnit);
@@ -190,7 +189,7 @@ public final class LargeTextFactory
          */
         public Builder setCharset(@Nonnull final Charset charset)
         {
-            this.charset = Objects.requireNonNull(charset,
+            this.charset = Preconditions.checkNotNull(charset,
                 "charset cannot be null");
             return this;
         }
@@ -206,7 +205,7 @@ public final class LargeTextFactory
          */
         public Builder setCharsetByName(@Nonnull final String charsetByName)
         {
-            Objects.requireNonNull(charsetByName, "charset must not be null");
+            Preconditions.checkNotNull(charsetByName, "charset must not be null");
             final Charset c = Charset.forName(charsetByName);
             return setCharset(c);
         }
@@ -229,7 +228,7 @@ public final class LargeTextFactory
             Preconditions.checkArgument(quantity > 0,
                 "window size must be strictly positive");
             this.quantity = quantity;
-            this.sizeUnit = Objects.requireNonNull(sizeUnit,
+            this.sizeUnit = Preconditions.checkNotNull(sizeUnit,
                 "window size unit must not be null");
             final long targetWindowSize = sizeUnit.sizeInBytes(quantity);
             Preconditions.checkArgument(targetWindowSize >= MIN_WINDOW_SIZE,

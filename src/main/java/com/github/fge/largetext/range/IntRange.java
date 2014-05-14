@@ -25,7 +25,6 @@ import com.google.common.collect.RangeMap;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import javax.annotation.concurrent.Immutable;
-import java.util.Objects;
 
 /**
  * "Reduced" version of Guava's {@link Range} for int primitives
@@ -111,7 +110,7 @@ public final class IntRange
      */
     public boolean encloses(final IntRange other)
     {
-        Objects.requireNonNull(other, "argument cannot be null");
+        Preconditions.checkNotNull(other, "argument cannot be null");
         return lowerBound <= other.lowerBound && upperBound >= other.upperBound;
     }
 
@@ -128,7 +127,7 @@ public final class IntRange
      */
     public IntRange append(final IntRange other)
     {
-        Objects.requireNonNull(other, "argument cannot be null");
+        Preconditions.checkNotNull(other, "argument cannot be null");
         Preconditions.checkArgument(upperBound == other.lowerBound, "lower " +
             "bound of range in argument must be equal to this range's upper " +
             "bound");
