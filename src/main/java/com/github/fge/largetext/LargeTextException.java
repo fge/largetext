@@ -27,8 +27,8 @@ import javax.annotation.concurrent.Immutable;
  * <p>This is the exception thrown on decoding errors, interruptions etc.</p>
  *
  * <p>It is pretty much required, because {@link CharSequence} does not account
- * for potential interruptions (we cannot throw an {@link InterruptedException}
- * nor failures (we can fail to decode a file).</p>
+ * for potential interruptions (we cannot throw an {@link InterruptedException})
+ * or failures (we can fail to decode a file).</p>
  */
 @Immutable
 @ParametersAreNonnullByDefault
