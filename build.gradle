@@ -34,20 +34,17 @@ project.ext {
  */
 buildscript {
     repositories {
-        maven { url "http://repo.springsource.org/plugins-release" }
-        maven { url "http://repo.springsource.org/plugins-snapshot" }
+        maven { url "http://repo.spring.io/plugins-release" };
+        mavenCentral();
     }
     dependencies {
-        classpath("org.springframework.build.gradle:propdeps-plugin:0.0.6-SNAPSHOT")
+        classpath(group: "org.springframework.build.gradle",
+            name: "propdeps-plugin", version: "0.0.6")
+        classpath(group: "info.solidsoft.gradle.pitest",
+            name: "gradle-pitest-plugin", version: "0.33.0");
     }
 };
 
-configure(allprojects) {
-    apply(plugin: "propdeps");
-    apply(plugin: "propdeps-maven");
-    apply(plugin: "propdeps-idea");
-    apply(plugin: "propdeps-eclipse");
-}
 
 apply(plugin: "java");
 apply(plugin: "maven");
@@ -55,6 +52,11 @@ apply(plugin: "signing");
 apply(plugin: "osgi");
 apply(plugin: "idea");
 apply(plugin: "eclipse");
+apply(plugin: "propdeps");
+apply(plugin: "propdeps-maven");
+apply(plugin: "propdeps-idea");
+apply(plugin: "propdeps-eclipse");
+apply(plugin: "pitest");
 
 /*
  * Repositories to use
@@ -79,12 +81,10 @@ dependencies {
     testCompile(group: "org.assertj", name: "assertj-core", version: "1.6.0");
 }
 
-/*
- * Necessary! Otherwise TestNG will not be used...
- *
- * Also, we don't want gradle's default HTML report: it does not support
- * parameterized tests which I use a _lot_.
- */
+compileJava {
+    options.compilerArgs = [ "-Xlint:unchecked" ];
+}
+
 test {
     useTestNG() {
         useDefaultListeners = true;
