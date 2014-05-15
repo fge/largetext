@@ -118,7 +118,7 @@ public final class LargeTextFactory
     public LargeText fromPath(@Nonnull final Path path)
         throws IOException
     {
-        Objects.requireNonNull(path, "path must not be null");
+        Preconditions.checkNotNull(path, "path must not be null");
         final FileChannel channel = FileChannel.open(path,
             StandardOpenOption.READ);
         return new NotThreadSafeLargeText(channel, charset, quantity, sizeUnit);
