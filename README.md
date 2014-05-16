@@ -27,7 +27,7 @@ Java 1.4!
 
 ## Versions
 
-The current version is **0.1.0**. Javadoc is [available online](http://fge.github.io/largetext/). It
+The current version is **0.2.0**. Javadoc is [available online](http://fge.github.io/largetext/). It
 is available on Maven Central.
 
 Using [gradle](http://gradle.org):
