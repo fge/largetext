@@ -18,12 +18,9 @@
 
 group = "com.github.fge";
 version = "0.2.1-SNAPSHOT";
-
-project.ext {
-    description = "A library for handling large text files as CharSequences";
-    sourceCompatibility = "1.7";
-    targetCompatibility = "1.7"; // defaults to sourceCompatibility
-};
+description = "A library for handling large text files as CharSequences";
+sourceCompatibility = "1.7";
+targetCompatibility = "1.7"; // defaults to sourceCompatibility
 
 /*
  * This has to be here... It will not be taken into account in common.gradle!
@@ -39,9 +36,9 @@ buildscript {
     }
     dependencies {
         classpath(group: "org.springframework.build.gradle",
-            name: "propdeps-plugin", version: "0.0.6")
+            name: "propdeps-plugin", version: "0.0.7")
         classpath(group: "info.solidsoft.gradle.pitest",
-            name: "gradle-pitest-plugin", version: "0.33.0");
+            name: "gradle-pitest-plugin", version: "1.1.2");
     }
 };
 
@@ -56,7 +53,7 @@ apply(plugin: "propdeps");
 apply(plugin: "propdeps-maven");
 apply(plugin: "propdeps-idea");
 apply(plugin: "propdeps-eclipse");
-apply(plugin: "pitest");
+apply(plugin: "info.solidsoft.pitest");
 
 /*
  * Repositories to use
@@ -69,20 +66,16 @@ repositories {
  * List of dependencies
  */
 dependencies {
-    compile(group: "com.google.guava", name: "guava", version: "17.0");
     provided(group: "com.google.code.findbugs", name: "jsr305",
-        version: "2.0.3");
-    testCompile(group: "org.testng", name: "testng", version: "6.8.7") {
+        version: "3.0.0");
+    compile(group: "com.google.guava", name: "guava", version: "18.0");
+    testCompile(group: "org.testng", name: "testng", version: "6.8.13") {
         exclude(group: "junit", module: "junit");
         exclude(group: "org.beanshell", module: "bsh");
         exclude(group: "org.yaml", module: "snakeyaml");
     };
-    testCompile(group: "org.mockito", name: "mockito-core", version: "1.9.5");
-    testCompile(group: "org.assertj", name: "assertj-core", version: "1.6.0");
-}
-
-compileJava {
-    options.compilerArgs = [ "-Xlint:unchecked" ];
+    testCompile(group: "org.mockito", name: "mockito-core", version: "1.10.17");
+    testCompile(group: "org.assertj", name: "assertj-core", version: "1.7.0");
 }
 
 test {
@@ -124,7 +117,8 @@ artifacts {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = "1.11";
+    gradleVersion = "2.2.1";
+    distributionUrl = "http://services.gradle.org/distributions/gradle-${gradleVersion}-all.zip";
 }
 
 task pom << {
@@ -190,9 +184,9 @@ uploadArchives {
     uploadArchives.repositories.mavenDeployer
 ]*.pom*.whenConfigured { pom ->
     pom.project {
-        name "${name}";
+        name "${project.name}";
+        description "${project.description}";
         packaging "jar";
-        description "${description}";
         url "${projectURL}";
 
         scm {
