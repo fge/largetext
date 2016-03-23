@@ -41,11 +41,12 @@ public class MutableLargeTextFile implements Appendable, CharSequence{
         // let 'sourceChannel' be a FileChannel at source
 
         // for each range 'currentRange' in ranges
+        //   let byteRange = convertCharIdxToByteIdx(source, currentRange);
         //   if changes contains currentRange:
         //     let fileChannelFriendlyBuffer = new DMAableBuffer(changes.get(currentRange));
-        //     targetChannel.write(fileChannelFriendlyBuffer, currentRange);
+        //     targetChannel.write(fileChannelFriendlyBuffer, byteRange);
         //   otherwise:
-        //     targetChannel.transferFrom(sourceChannel, currentRange)
+        //     targetChannel.transferFrom(sourceChannel, byteRange)
 
         // maybe do some funny business with an auto-appended '.part' file extension
         // to ~gracefully fail if the JVM dies mid transfer.
