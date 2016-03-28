@@ -1,13 +1,13 @@
 package com.github.fge.largetext;
 
-import com.google.common.io.Files;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static org.testng.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by Geoff on 3/26/2016.
@@ -15,10 +15,10 @@ import static org.testng.Assert.*;
 public class MutableLargeTextFileFixture {
 
     @Test
-    public void when_writing_to_new_target_without_modification_should_be_file_copy() throws IOException {
+    public void when_writing_to_new_target_without_modification_should_be_file_copy() throws IOException, URISyntaxException {
         //setup
 
-        Path source = Paths.get(getClass().getResource("ThreeLineSimple.txt").getPath());
+        Path source = Paths.get(getClass().getResource("ThreeLineSimple.txt").toURI());
         LargeText largeText = LargeTextFactory.defaultFactory().load(source);
         MutableLargeTextFile mutable = new MutableLargeTextFile(largeText);
         Path target = source.getParent().resolve(source.getFileName().toString() + ".re-written");
@@ -27,6 +27,6 @@ public class MutableLargeTextFileFixture {
         mutable.writeTo(target);
 
         //assert
-        Files.equal(source.toFile(), target.toFile());
+        assertThat(target.toFile()).hasContentEqualTo(source.toFile());
     }
 }
