@@ -93,7 +93,7 @@ public abstract class LargeText
     protected static final IntRange EMPTY_RANGE = new IntRange(0, 0);
     protected static final CharBuffer EMPTY_BUFFER = CharBuffer.allocate(0);
 
-    private final FileChannel channel;
+    protected final FileChannel channel;
     protected final TextDecoder decoder;
     protected final TextCache loader;
     private final CharSequenceFactory factory;

@@ -5,10 +5,16 @@ import com.google.common.collect.RangeMap;
 import com.google.common.collect.TreeRangeMap;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Map;
+import java.util.stream.StreamSupport;
+
+import static com.google.common.collect.FluentIterable.from;
 
 /**
  * String-builder-ish wrapper on LargeText.
@@ -19,6 +25,7 @@ public class MutableLargeTextFile implements Appendable, CharSequence{
 
     private final LargeText source;
     private final RangeMap<Integer, CharSequence> changes = TreeRangeMap.create();
+    private final Charset encoding = Charset.defaultCharset();//TODO
 
     public MutableLargeTextFile(LargeText source) {
         this.source = source;
@@ -50,6 +57,40 @@ public class MutableLargeTextFile implements Appendable, CharSequence{
 
         // maybe do some funny business with an auto-appended '.part' file extension
         // to ~gracefully fail if the JVM dies mid transfer.
+
+        try {
+            FileChannel target = FileChannel.open(newTarget, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+
+            for(Range<Integer> charSpan : getAllSpans(changes)){
+                Range<Integer> byteSpan = convertToByteSpan(charSpan);
+
+                Map<Range<Integer>, CharSequence> newContentByRangeInTarget = changes.asMapOfRanges();
+                if(newContentByRangeInTarget.containsKey(charSpan)){
+                    //bytespan is the range to consume in taret, it has nothing to do with how long the replacement is.
+
+                    CharSequence newSequence = newContentByRangeInTarget.get(charSpan);
+
+                    ByteBuffer fileChannelFriendlyBuffer = encoding.encode(CharBuffer.wrap(newSequence));
+
+                    target.write(fileChannelFriendlyBuffer);
+                }
+                else{
+                    target.transferFrom(source.channel, byteSpan.lowerEndpoint(), byteSpan.upperEndpoint() - byteSpan.lowerEndpoint()); //TODO inclusive/exclusive?
+                }
+            }
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    private Range<Integer> convertToByteSpan(Range<Integer> charSpan) {
+        return Range.open(0, 0);
+    }
+
+    private Range<Integer>[] getAllSpans(RangeMap<Integer, CharSequence> changes) {
+        return new Range[0];
     }
 
     /**
@@ -77,7 +118,7 @@ public class MutableLargeTextFile implements Appendable, CharSequence{
 
     @Override
     public MutableLargeTextFile append(CharSequence csq) throws IOException {
-        Range targetSite = Range.closedOpen(source.length(), source.length() + csq.length());
+        Range<Integer> targetSite = Range.closedOpen(source.length(), source.length() + csq.length());
         changes.put(targetSite, csq);
 
         return this;
