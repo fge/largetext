@@ -59,6 +59,11 @@ public final class IntRange
         this.upperBound = upperBound;
     }
 
+    public IntRange(Range<Integer> guavaRange){
+        this.upperBound = guavaRange.upperEndpoint();
+        this.lowerBound = guavaRange.lowerEndpoint();
+    }
+
     /**
      * Get the (inclusive) lower bound of this range
      *

@@ -1,5 +1,6 @@
 package com.github.fge.largetext;
 
+import com.github.fge.largetext.range.IntRange;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 import com.google.common.collect.TreeRangeMap;
@@ -11,6 +12,8 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.StreamSupport;
 
@@ -61,8 +64,8 @@ public class MutableLargeTextFile implements Appendable, CharSequence{
         try {
             FileChannel target = FileChannel.open(newTarget, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 
-            for(Range<Integer> charSpan : getAllSpans(changes)){
-                Range<Integer> byteSpan = convertToByteSpan(charSpan);
+            for(Range<Integer> charSpan : getAllSpans()){
+                Range<Long> byteSpan = convertToByteSpan(charSpan);
 
                 Map<Range<Integer>, CharSequence> newContentByRangeInTarget = changes.asMapOfRanges();
                 if(newContentByRangeInTarget.containsKey(charSpan)){
@@ -82,15 +85,25 @@ public class MutableLargeTextFile implements Appendable, CharSequence{
         catch (IOException e) {
             throw new RuntimeException(e);
         }
-
     }
 
-    private Range<Integer> convertToByteSpan(Range<Integer> charSpan) {
-        return Range.open(0, 0);
+    private Range<Long> convertToByteSpan(Range<Integer> charSpan) {
+        return source.decoder.getRange(charSpan.lowerEndpoint()).getByteRange().asGuavaRange();
     }
 
-    private Range<Integer>[] getAllSpans(RangeMap<Integer, CharSequence> changes) {
-        return new Range[0];
+    private Iterable<Range<Integer>> getAllSpans() {
+        List<Range<Integer>> results = new ArrayList<>();
+
+        if(changes.asMapOfRanges().isEmpty()){
+            results.add(Range.closedOpen(0, source.length()));
+            return results;
+        }
+
+        throw new UnsupportedOperationException();
+//        Range<Integer> lastChange = Range.open(0, 0);
+//        for(Range<Integer> change : changes.asMapOfRanges().keySet()){
+//            results.add(change);
+//        }
     }
 
     /**
