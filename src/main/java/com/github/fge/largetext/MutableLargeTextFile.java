@@ -94,16 +94,14 @@ public class MutableLargeTextFile implements Appendable, CharSequence{
     private Iterable<Range<Integer>> getAllSpans() {
         List<Range<Integer>> results = new ArrayList<>();
 
-        if(changes.asMapOfRanges().isEmpty()){
-            results.add(Range.closedOpen(0, source.length()));
-            return results;
+        int lastHighValue = 0;
+        for(Range<Integer> change : changes.asMapOfRanges().keySet()){
+            results.add(Range.open(lastHighValue, change.lowerEndpoint()));
+            results.add(change);
+            lastHighValue = change.upperEndpoint();
         }
 
-        throw new UnsupportedOperationException();
-//        Range<Integer> lastChange = Range.open(0, 0);
-//        for(Range<Integer> change : changes.asMapOfRanges().keySet()){
-//            results.add(change);
-//        }
+        return results;
     }
 
     /**
