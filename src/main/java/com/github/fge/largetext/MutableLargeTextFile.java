@@ -76,6 +76,7 @@ public class MutableLargeTextFile implements Appendable, CharSequence{
                     ByteBuffer fileChannelFriendlyBuffer = encoding.encode(CharBuffer.wrap(newSequence));
 
                     int writtenBytes = target.write(fileChannelFriendlyBuffer);
+                    //TODO on byte-write failure?
 
                     int x = 4;
                 }

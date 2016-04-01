@@ -1,5 +1,6 @@
 package com.github.fge.largetext;
 
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
@@ -8,6 +9,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,7 +31,7 @@ public class MutableLargeTextFileFixture {
     public void when_writing_to_new_target_without_modification_should_be_file_copy() throws IOException, URISyntaxException {
         //setup
         MutableLargeTextFile mutable = makeMutableText(SimpleThreeLineUTF8Doc);
-        fileUnderTest = SimpleThreeLineUTF8Doc.getParent().resolve(SimpleThreeLineUTF8Doc.getFileName().toString() + ".re-written");
+        fileUnderTest = generateNewFileFor(SimpleThreeLineUTF8Doc);
 
         //act
         mutable.writeTo(fileUnderTest);
@@ -38,19 +40,23 @@ public class MutableLargeTextFileFixture {
         assertThat(fileUnderTest.toFile()).hasContentEqualTo(SimpleThreeLineUTF8Doc.toFile());
     }
 
+    private Path generateNewFileFor(Path fileColleague) {
+        return fileColleague.getParent().resolve(fileColleague.getFileName().toString() + "." + UUID.randomUUID() + ".re-written");
+    }
+
     @Test
     public void when_appending_change_to_new_file_with_should_include_change() throws IOException, URISyntaxException {
 
         //setup
         MutableLargeTextFile mutable = makeMutableText(SimpleThreeLineUTF8Doc);
-        Path target = SimpleThreeLineUTF8Doc.getParent().resolve(SimpleThreeLineUTF8Doc.getFileName().toString() + ".re-written");
+        fileUnderTest = generateNewFileFor(SimpleThreeLineUTF8Doc);
 
         //act
         mutable.append("new seq!\n", 104, 105);
-        mutable.writeTo(target);
+        mutable.writeTo(fileUnderTest);
 
         //assert
-        assertThat(target.toFile()).hasContent(
+        assertThat(fileUnderTest.toFile()).hasContent(
                 "This is the first line, it only contains words\n" +
                 "1.23456\n" +
                 "This is the last line, it contains more words\n" +
@@ -62,14 +68,14 @@ public class MutableLargeTextFileFixture {
     public void when_prepending_to_new_file_should_include_change() throws IOException {
         //setup
         MutableLargeTextFile mutable = makeMutableText(SimpleThreeLineUTF8Doc);
-        Path target = SimpleThreeLineUTF8Doc.getParent().resolve(SimpleThreeLineUTF8Doc.getFileName().toString() + ".re-written");
+        fileUnderTest = generateNewFileFor(SimpleThreeLineUTF8Doc);
 
         //act
         mutable.append("new seq!\n", 0, 1);
-        mutable.writeTo(target);
+        mutable.writeTo(fileUnderTest);
 
         //assert
-        assertThat(target.toFile()).hasContent(
+        assertThat(fileUnderTest.toFile()).hasContent(
                 "new seq!\n" +
                 "This is the first line, it only contains words\n" +
                 "1.23456\n" +
@@ -82,7 +88,7 @@ public class MutableLargeTextFileFixture {
         return new MutableLargeTextFile(largeText);
     }
 
-    @AfterTest
+    @AfterMethod
     public void delete_file_under_test() throws IOException {
         if(fileUnderTest != null){
             Files.delete(fileUnderTest);
