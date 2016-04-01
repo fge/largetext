@@ -117,6 +117,7 @@ public class MutableLargeTextFile implements Appendable, CharSequence{
 
         int lastHighValueOpen = 0;
         for(Range<Integer> change : changes.asMapOfRanges().keySet()){
+            assert change.lowerEndpoint() >= lastHighValueOpen;
             if(change.lowerEndpoint() != 0) { results.add(Range.closedOpen(lastHighValueOpen, change.lowerEndpoint())); }
             results.add(change);
             lastHighValueOpen = change.upperEndpoint();
