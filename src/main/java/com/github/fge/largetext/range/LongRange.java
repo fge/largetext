@@ -20,6 +20,7 @@ package com.github.fge.largetext.range;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Range;
+import com.google.common.collect.RangeMap;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -131,6 +132,17 @@ public final class LongRange
             "bound of range in argument must be equal to this range's upper " +
             "bound");
         return new LongRange(lowerBound, other.upperBound);
+    }
+
+    /**
+     * Return this range as a Guava {@link Range}
+     *
+     * @return a Guava range
+     * @see RangeMap
+     */
+    public Range<Long> asGuavaRange()
+    {
+        return Range.closedOpen(lowerBound, upperBound);
     }
 
     @Override
