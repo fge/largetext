@@ -1,5 +1,6 @@
 package com.github.fge.largetext;
 
+import com.github.fge.largetext.load.TextRange;
 import com.github.fge.largetext.range.IntRange;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
@@ -61,8 +62,7 @@ public class MutableLargeTextFile implements Appendable, CharSequence{
         // maybe do some funny business with an auto-appended '.part' file extension
         // to ~gracefully fail if the JVM dies mid transfer.
 
-        try {
-            FileChannel target = FileChannel.open(newTarget, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        try (FileChannel target = FileChannel.open(newTarget, StandardOpenOption.CREATE, StandardOpenOption.WRITE)){
 
             for(Range<Integer> charSpan : getAllSpans()){
                 Range<Long> byteSpan = convertToByteSpan(charSpan);
@@ -75,10 +75,21 @@ public class MutableLargeTextFile implements Appendable, CharSequence{
 
                     ByteBuffer fileChannelFriendlyBuffer = encoding.encode(CharBuffer.wrap(newSequence));
 
-                    target.write(fileChannelFriendlyBuffer);
+                    int writtenBytes = target.write(fileChannelFriendlyBuffer);
+
+                    int x = 4;
                 }
                 else{
-                    target.transferFrom(source.channel, byteSpan.lowerEndpoint(), byteSpan.upperEndpoint() - byteSpan.lowerEndpoint()); //TODO inclusive/exclusive?
+                    long transferred = target.transferFrom(
+                            source.channel,
+                            target.position() + byteSpan.lowerEndpoint(),
+                            target.position() + byteSpan.upperEndpoint() - byteSpan.lowerEndpoint()
+                    );
+                    target.position(transferred);
+                    //TODO inclusive/exclusive?
+                    //TODO retry on transferFrom failure?
+
+                    int x = 4;
                 }
             }
         }
@@ -88,17 +99,30 @@ public class MutableLargeTextFile implements Appendable, CharSequence{
     }
 
     private Range<Long> convertToByteSpan(Range<Integer> charSpan) {
-        return source.decoder.getRange(charSpan.lowerEndpoint()).getByteRange().asGuavaRange();
+
+        int lowerEndpoint = charSpan.lowerEndpoint();
+
+        if(lowerEndpoint >= source.length()){
+            return Range.closedOpen((long)lowerEndpoint, (long)lowerEndpoint + 1);
+        }
+
+        TextRange textRange = source.decoder.getRange(lowerEndpoint);
+        Range<Long> inRangeByteRange = textRange.getByteRange().asGuavaRange();
+        return inRangeByteRange;
     }
 
     private Iterable<Range<Integer>> getAllSpans() {
         List<Range<Integer>> results = new ArrayList<>();
 
-        int lastHighValue = 0;
+        int lastHighValueOpen = 0;
         for(Range<Integer> change : changes.asMapOfRanges().keySet()){
-            results.add(Range.open(lastHighValue, change.lowerEndpoint()));
+            if(change.lowerEndpoint() != 0) { results.add(Range.closedOpen(lastHighValueOpen, change.lowerEndpoint())); }
             results.add(change);
-            lastHighValue = change.upperEndpoint();
+            lastHighValueOpen = change.upperEndpoint();
+        }
+
+        if(results.isEmpty() || results.get(results.size() - 1).upperEndpoint() < source.length()){
+            results.add(Range.closedOpen(lastHighValueOpen, source.length()));
         }
 
         return results;
@@ -128,7 +152,7 @@ public class MutableLargeTextFile implements Appendable, CharSequence{
     }
 
     @Override
-    public MutableLargeTextFile append(CharSequence csq) throws IOException {
+    public MutableLargeTextFile append(CharSequence csq){
         Range<Integer> targetSite = Range.closedOpen(source.length(), source.length() + csq.length());
         changes.put(targetSite, csq);
 
@@ -136,7 +160,7 @@ public class MutableLargeTextFile implements Appendable, CharSequence{
     }
 
     @Override
-    public MutableLargeTextFile append(CharSequence csq, int start, int end) throws IOException {
+    public MutableLargeTextFile append(CharSequence csq, int start, int end) {
 
         //TODO validate start and end?
 
@@ -146,8 +170,8 @@ public class MutableLargeTextFile implements Appendable, CharSequence{
     }
 
     @Override
-    public MutableLargeTextFile append(char c) throws IOException {
-        Range<Integer> targetSite = Range.singleton(source.length());
+    public MutableLargeTextFile append(char c) {
+        Range<Integer> targetSite = Range.closedOpen(source.length(), source.length()+1);
         changes.put(targetSite, CharBuffer.wrap(new char[]{c}));
 
         return this;
