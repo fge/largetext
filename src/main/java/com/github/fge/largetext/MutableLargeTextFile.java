@@ -181,6 +181,8 @@ public class MutableLargeTextFile implements Appendable, CharSequence{
 
     @Override
     public int length() {
+        //TODO nope, what if we have no changes? what if the range contains something like [0, 1) -> "longText" ?
+        // keep an int keysetLength and an int valuesLength?
         return changes.span().upperEndpoint() + 1;
     }
 
@@ -193,6 +195,7 @@ public class MutableLargeTextFile implements Appendable, CharSequence{
             return changedValue.getValue().charAt(indexIntoChange);
         }
 
+        //TODO nope, changes might contain a size offset.
         return source.charAt(index);
     }
 
