@@ -51,4 +51,9 @@ public enum EmptyCharSequence
         return this;
     }
 
+    @Override
+    public String toString()
+    {
+        return "";
+    }
 }
