@@ -86,7 +86,7 @@ import java.util.logging.Logger;
  */
 @ParametersAreNonnullByDefault
 public abstract class LargeText
-    implements CharSequence, Closeable
+    implements ClosableCharSequence
 {
     private static final Logger LOGGER
         = Logger.getLogger(LargeText.class.getCanonicalName());
