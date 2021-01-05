@@ -21,8 +21,9 @@ package com.github.fge.largetext.sequence;
 import com.github.fge.largetext.load.TextCache;
 import com.github.fge.largetext.load.TextDecoder;
 import com.github.fge.largetext.range.IntRange;
-import com.google.common.base.Strings;
+import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -48,13 +50,21 @@ public final class TextRangeCharSequenceTest
     private Path testFile;
     private FileChannel channel;
     private CharSequenceFactory factory;
-    private final String testString = Strings.repeat("abcdefghij", 5000);
+    private final String testString = RandomStringUtils.random(5_000);
 
     @BeforeClass
     public void createFile()
         throws IOException
     {
         final Charset charset = StandardCharsets.UTF_8;
+        final Supplier<CharsetDecoder> decoderSupplier = new Supplier<CharsetDecoder>()
+        {
+            @Override
+            public CharsetDecoder get()
+            {
+                return charset.newDecoder();
+            }
+        };
         testFile = Files.createTempFile("foo", "bar");
         try (
             final BufferedWriter writer = Files.newBufferedWriter(testFile,
@@ -64,8 +74,8 @@ public final class TextRangeCharSequenceTest
             writer.flush();
         }
         channel = FileChannel.open(testFile, StandardOpenOption.READ);
-        final TextDecoder decoder = new TextDecoder(channel, charset, 1000L);
-        final TextCache loader = new TextCache(channel, charset);
+        final TextDecoder decoder = new TextDecoder(channel, decoderSupplier, 1000L);
+        final TextCache loader = new TextCache(channel, decoderSupplier);
         factory = new CharSequenceFactory(decoder, loader);
     }
 
@@ -74,7 +84,7 @@ public final class TextRangeCharSequenceTest
     {
         final List<Object[]> list = Lists.newArrayList();
 
-        list.add(new Object[] { 0, 1000, CharBuffer.class });
+        list.add(new Object[] { 0, 250 /* 1000 / max 4 bytes per character */, CharBuffer.class });
         list.add(new Object[] { 500, 1049, MultiRangeCharSequence.class });
 
         return list.iterator();

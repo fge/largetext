@@ -20,13 +20,14 @@ package com.github.fge.largetext;
 
 import com.github.fge.largetext.load.TextRange;
 import com.github.fge.largetext.range.IntRange;
+import com.google.common.base.Supplier;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.io.IOException;
 import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.nio.file.Path;
 
 /**
@@ -48,11 +49,11 @@ public final class NotThreadSafeLargeText
     private IntRange range = EMPTY_RANGE;
     private CharBuffer buffer = EMPTY_BUFFER;
 
-    NotThreadSafeLargeText(final FileChannel channel, final Charset charset,
+    NotThreadSafeLargeText(final FileChannel channel, final Supplier<CharsetDecoder> decoderSupplier,
         final int quantity, final SizeUnit sizeUnit)
         throws IOException
     {
-        super(channel, charset, quantity, sizeUnit);
+        super(channel, decoderSupplier, quantity, sizeUnit);
     }
 
     @Override

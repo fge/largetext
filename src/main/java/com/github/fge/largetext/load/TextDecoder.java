@@ -22,6 +22,7 @@ import com.github.fge.largetext.LargeText;
 import com.github.fge.largetext.LargeTextException;
 import com.github.fge.largetext.LargeTextFactory;
 import com.github.fge.largetext.range.IntRange;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.RangeMap;
 import com.google.common.collect.TreeRangeMap;
@@ -34,10 +35,8 @@ import java.io.IOException;
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
-import java.nio.charset.CodingErrorAction;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -87,7 +86,7 @@ public final class TextDecoder
     private final RangeMap<Integer, TextRange> ranges = TreeRangeMap.create();
 
     private final FileChannel channel;
-    private final Charset charset;
+    private final Supplier<CharsetDecoder> decoderSupplier;
     private final long fileSize;
     private final long targetMapSize;
 
@@ -95,18 +94,18 @@ public final class TextDecoder
      * Constructor; don't use directly!
      *
      * @param channel the {@link FileChannel} to the target file
-     * @param charset the character encoding to use
+     * @param decoderSupplier the character decoder to use
      * @param targetMapSize the target byte mapping size
      * @throws IOException error obtaining information on the channel
      */
-    public TextDecoder(final FileChannel channel, final Charset charset,
+    public TextDecoder(final FileChannel channel, final Supplier<CharsetDecoder> decoderSupplier,
         final long targetMapSize)
         throws IOException
     {
         this.channel = channel;
         fileSize = channel.size();
         this.targetMapSize = targetMapSize;
-        this.charset = charset;
+        this.decoderSupplier = decoderSupplier;
         executor.submit(decodingTask());
     }
 
@@ -199,9 +198,7 @@ public final class TextDecoder
             @Override
             public void run()
             {
-                final CharsetDecoder decoder = charset.newDecoder()
-                    .onMalformedInput(CodingErrorAction.REPORT)
-                    .onUnmappableCharacter(CodingErrorAction.REPORT);
+                final CharsetDecoder decoder = decoderSupplier.get();
                 final CharBuffer charMap
                     = CharBuffer.allocate((int) targetMapSize);
 
@@ -244,7 +241,13 @@ public final class TextDecoder
         final CharsetDecoder decoder, final CharBuffer charMap)
         throws IOException
     {
-        long nrBytes = Math.min(targetMapSize, fileSize - byteOffset);
+        long nrBytes = fileSize - byteOffset;
+        boolean endOfInput = true;
+
+        if (nrBytes > targetMapSize) {
+            nrBytes = targetMapSize;
+            endOfInput = false;
+        }
 
         final MappedByteBuffer byteMap
             = channel.map(FileChannel.MapMode.READ_ONLY, byteOffset, nrBytes);
@@ -252,7 +255,7 @@ public final class TextDecoder
         charMap.rewind();
         decoder.reset();
 
-        final CoderResult result = decoder.decode(byteMap, charMap, true);
+        final CoderResult result = decoder.decode(byteMap, charMap, endOfInput);
 
         /*
          * Unmappable character... It _can_ happen even with a decoder, see
@@ -265,8 +268,8 @@ public final class TextDecoder
          * Incomplete byte sequence: in this case, the mapping position reflects
          * what was actually read; change the mapping size
          */
-        if (result.isMalformed())
-            nrBytes = (long) byteMap.position();
+        if (result.isUnderflow() || result.isMalformed())
+            nrBytes = byteMap.position();
 
         return new TextRange(byteOffset, nrBytes, charOffset,
             charMap.position());

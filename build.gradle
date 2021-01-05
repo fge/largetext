@@ -67,14 +67,15 @@ repositories {
 dependencies {
     provided(group: "com.google.code.findbugs", name: "jsr305",
         version: "3.0.0");
-    compile(group: "com.google.guava", name: "guava", version: "18.0");
+    compile(group: "com.google.guava", name: "guava", version: "30.1-android");
     testCompile(group: "org.testng", name: "testng", version: "6.8.13") {
         exclude(group: "junit", module: "junit");
         exclude(group: "org.beanshell", module: "bsh");
         exclude(group: "org.yaml", module: "snakeyaml");
     };
     testCompile(group: "org.mockito", name: "mockito-core", version: "1.10.17");
-    testCompile(group: "org.assertj", name: "assertj-core", version: "1.7.0");
+    testCompile(group: "org.assertj", name: "assertj-core", version: "2.9.1");
+    testCompile(group: "org.apache.commons", name: "commons-lang3", version: "3.11")
 }
 
 test {

@@ -19,6 +19,7 @@
 package com.github.fge.largetext;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
@@ -26,6 +27,7 @@ import javax.annotation.concurrent.NotThreadSafe;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -70,7 +72,7 @@ import java.nio.file.StandardOpenOption;
 @Immutable
 public final class LargeTextFactory
 {
-    private final Charset charset;
+    private final Supplier<CharsetDecoder> decoderSupplier;
     private final SizeUnit sizeUnit;
     private final int quantity;
 
@@ -96,7 +98,7 @@ public final class LargeTextFactory
 
     private LargeTextFactory(final Builder builder)
     {
-        charset = builder.charset;
+        decoderSupplier = builder.decoderSupplier;
         sizeUnit = builder.sizeUnit;
         quantity = builder.quantity;
     }
@@ -121,7 +123,7 @@ public final class LargeTextFactory
         Preconditions.checkNotNull(path, "path must not be null");
         final FileChannel channel = FileChannel.open(path,
             StandardOpenOption.READ);
-        return new NotThreadSafeLargeText(channel, charset, quantity, sizeUnit);
+        return new NotThreadSafeLargeText(channel, decoderSupplier, quantity, sizeUnit);
     }
 
     /**
@@ -141,7 +143,7 @@ public final class LargeTextFactory
         Preconditions.checkNotNull(path, "path must not be null");
         final FileChannel channel = FileChannel.open(path,
             StandardOpenOption.READ);
-        return new NotThreadSafeLargeText(channel, charset, quantity, sizeUnit);
+        return new NotThreadSafeLargeText(channel, decoderSupplier, quantity, sizeUnit);
     }
 
     /**
@@ -160,7 +162,7 @@ public final class LargeTextFactory
         Preconditions.checkNotNull(path, "path must not be null");
         final FileChannel channel = FileChannel.open(path,
             StandardOpenOption.READ);
-        return new ThreadSafeLargeText(channel, charset, quantity, sizeUnit);
+        return new ThreadSafeLargeText(channel, decoderSupplier, quantity, sizeUnit);
     }
 
     /**
@@ -172,7 +174,8 @@ public final class LargeTextFactory
         private static final long MIN_WINDOW_SIZE = 1024L;
         private static final long MAX_WINDOW_SIZE = (long) Integer.MAX_VALUE;
 
-        private Charset charset = StandardCharsets.UTF_8;
+        private Supplier<CharsetDecoder> decoderSupplier =
+                defaultDecoder(StandardCharsets.UTF_8);
         private SizeUnit sizeUnit = SizeUnit.MiB;
         private int quantity = 2;
 
@@ -189,8 +192,9 @@ public final class LargeTextFactory
          */
         public Builder setCharset(@Nonnull final Charset charset)
         {
-            this.charset = Preconditions.checkNotNull(charset,
-                "charset cannot be null");
+            this.decoderSupplier = defaultDecoder(Preconditions.checkNotNull(
+                    charset, "charset cannot be null"
+            ));
             return this;
         }
 
@@ -208,6 +212,13 @@ public final class LargeTextFactory
             Preconditions.checkNotNull(charsetByName, "charset must not be null");
             final Charset c = Charset.forName(charsetByName);
             return setCharset(c);
+        }
+
+        public Builder setCharsetDecoder(@Nonnull final Supplier<CharsetDecoder> supplier)
+        {
+            this.decoderSupplier = Preconditions.checkNotNull(supplier,
+                    "charset decoder supplier cannot be null");
+            return this;
         }
 
         /**
@@ -247,5 +258,17 @@ public final class LargeTextFactory
         {
             return new LargeTextFactory(this);
         }
+    }
+
+    private static Supplier<CharsetDecoder> defaultDecoder(@Nonnull final Charset charset)
+    {
+        return new Supplier<CharsetDecoder>()
+        {
+            @Override
+            public CharsetDecoder get()
+            {
+                return charset.newDecoder();
+            }
+        };
     }
 }
