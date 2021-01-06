@@ -37,7 +37,6 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -150,12 +149,11 @@ public final class TextDecoder
             Thread.currentThread().interrupt();
             throw new LargeTextException("Interrupted", e);
         }
-        final Collection<TextRange> ret;
         synchronized (ranges) {
-            ret = ranges.subRangeMap(range.asGuavaRange())
-                .asMapOfRanges().values();
+            return ImmutableList.copyOf(
+                    ranges.subRangeMap(range.asGuavaRange()).asMapOfRanges().values()
+            );
         }
-        return ImmutableList.copyOf(ret);
     }
 
     /**
