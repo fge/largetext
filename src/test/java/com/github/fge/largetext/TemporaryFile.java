@@ -27,7 +27,7 @@ import java.nio.file.attribute.FileAttribute;
  * Thin wrapper of {@link Files#createTempFile(String, String, FileAttribute[])} that
  * removes temporary file on {@link #close()}.
  */
-final class TemporaryFile implements AutoCloseable
+public final class TemporaryFile implements AutoCloseable
 {
     private final Path path;
 
