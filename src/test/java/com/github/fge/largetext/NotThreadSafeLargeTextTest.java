@@ -18,6 +18,7 @@
 
 package com.github.fge.largetext;
 
+import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.assertj.core.api.ThrowableAssert;
@@ -208,6 +209,48 @@ public final class NotThreadSafeLargeTextTest
             try (final LargeText text = ignoreFactory.load(path)) {
                 assertThat(text.charAt(3)).isEqualTo('o');
                 assertThat(text.toString()).isEqualTo("Helo");
+            }
+        }
+    }
+
+    // Bug was found when NotThreadSafeLargeTextTest was updated to use multiple LargeTexts
+    // instead of single created in set up method.
+    //
+    // Issue is: status.setNrChars(charOffset) unblocks thread that awaits for character but
+    // at the same time it does not guarantee that TextRange will be put to ranges map.
+    // NullPointerException happens in this order:
+    //
+    // 1. main thread invokes charAt with index that is not yet available
+    // 2. text decoder in main thread adds CharWaiter and blocks in await()
+    // 3. text-decoder thread travels through file until it reaches window that
+    //    includes requested index
+    // 4. status.setNrChars(charOffset) at TextDecoder:226 unblocks main
+    //    main thread as required index is reached
+    // 5. main thread wins race and synchronizes on ranges to get range. Range is not
+    //    written yet, method returns null, NullPointerException is generated at
+    //    NotThreadSafeLargeText:64
+    // 6. text-decoder thread synchronizes on ranges and writes range.
+    //
+    // Set breakpoints (one that suspend single thread, not all threads) at:
+    // * TextDecoder:130 (synchronization on ranges)
+    // * TextDecoder:227 (synchronization on ranges)
+    //
+    // To reproduce, execute this test in debug mode.
+    //
+    // * if breakpoint hits text-decoder thread - switch to main and step over
+    // * if breakpoint hits main thread - step over
+    @Test
+    public void reproduceCharAtNullPointerExceptionCausedByStatusReportedBeforeRangesUpdate()
+        throws IOException
+    {
+        final String string = Strings.repeat("abcde", 5_000);
+        try (final TemporaryFile tmp = new TemporaryFile()) {
+            final Path path = tmp.getPath();
+
+            Files.write(path, string.getBytes(StandardCharsets.UTF_8));
+
+            try (final  LargeText text = LargeTextFactory.defaultFactory().load(path)) {
+                text.charAt(500);
             }
         }
     }
