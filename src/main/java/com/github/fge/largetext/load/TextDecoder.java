@@ -223,11 +223,11 @@ public final class TextDecoder
                     }
                     byteOffset = textRange.getByteRange().getUpperBound();
                     charOffset = textRange.getCharRange().getUpperBound();
-                    status.setNrChars(charOffset);
                     synchronized (ranges) {
                         ranges.put(textRange.getCharRange().asGuavaRange(),
                             textRange);
                     }
+                    status.setNrChars(charOffset);
                 }
                 status.setFinished(charOffset);
             }
