@@ -16,12 +16,6 @@
  * - ASL 2.0: http://www.apache.org/licenses/LICENSE-2.0.txt
  */
 
-group = "com.github.fge";
-version = "0.2.1-SNAPSHOT";
-description = "A library for handling large text files as CharSequences";
-sourceCompatibility = "1.7";
-targetCompatibility = "1.7"; // defaults to sourceCompatibility
-
 /*
  * This has to be here... It will not be taken into account in common.gradle!
  *
@@ -31,7 +25,7 @@ targetCompatibility = "1.7"; // defaults to sourceCompatibility
  */
 buildscript {
     repositories {
-        maven { url "http://repo.spring.io/plugins-release" };
+        maven { url "https://repo.spring.io/plugins-release" };
         mavenCentral();
     }
     dependencies {
@@ -46,7 +40,6 @@ buildscript {
 apply(plugin: "java");
 apply(plugin: "maven");
 apply(plugin: "signing");
-apply(plugin: "osgi");
 apply(plugin: "idea");
 apply(plugin: "eclipse");
 apply(plugin: "propdeps");
@@ -54,6 +47,12 @@ apply(plugin: "propdeps-maven");
 apply(plugin: "propdeps-idea");
 apply(plugin: "propdeps-eclipse");
 apply(plugin: "info.solidsoft.pitest");
+
+group = "com.github.fge";
+version = "0.2.1-SNAPSHOT";
+description = "A library for handling large text files as CharSequences";
+sourceCompatibility = "1.7";
+targetCompatibility = "1.7"; // defaults to sourceCompatibility
 
 /*
  * Repositories to use
@@ -99,6 +98,10 @@ task sourcesJar(type: Jar, dependsOn: classes) {
 
 javadoc {
     options.overview = "src/main/java/overview.html";
+    // https://github.com/gradle/gradle/issues/11182
+    if (JavaVersion.current().compareTo(JavaVersion.VERSION_1_7) > 0) {
+        options.addStringOption("-release", "7")
+    }
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
@@ -106,9 +109,9 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir;
 }
 
-javadoc.options.links("http://docs.oracle.com/javase/7/docs/api/");
-javadoc.options.links("http://jsr-305.googlecode.com/svn/trunk/javadoc/");
-javadoc.options.links("http://docs.guava-libraries.googlecode.com/git-history/v17.0/javadoc/");
+javadoc.options.links("https://docs.oracle.com/javase/7/docs/api/");
+javadoc.options.links("https://static.javadoc.io/com.google.code.findbugs/jsr305/3.0.2/");
+javadoc.options.links("https://static.javadoc.io/com.google.guava/guava/17.0/");
 
 artifacts {
     archives jar;
@@ -116,13 +119,10 @@ artifacts {
     archives javadocJar;
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = "2.2.1";
-    distributionUrl = "http://services.gradle.org/distributions/gradle-${gradleVersion}-all.zip";
-}
-
-task pom << {
-    pom {}.writeTo("${projectDir}/pom.xml");
+task pom {
+    doLast {
+        pom {}.writeTo("${projectDir}/pom.xml");
+    }
 }
 
 /*
@@ -137,18 +137,20 @@ project.ext {
     sonatypeSnapshots = "https://oss.sonatype.org/content/repositories/snapshots/";
 };
 
-task checkSigningRequirements << {
-    def requiredProperties = [ "sonatypeUsername", "sonatypePassword" ];
-    def noDice = false;
-    requiredProperties.each {
-        if (project.properties[it] == null) {
-            noDice = true;
-            System.err.printf("property \"%s\" is not defined!")
+task checkSigningRequirements {
+    doLast {
+        def requiredProperties = [ "sonatypeUsername", "sonatypePassword" ];
+        def noDice = false;
+        requiredProperties.each {
+            if (project.properties[it] == null) {
+                noDice = true;
+                System.err.printf("property \"%s\" is not defined!")
+            }
         }
+        if (noDice)
+            throw new IllegalStateException("missing required properties for " +
+                    "upload");
     }
-    if (noDice)
-        throw new IllegalStateException("missing required properties for " +
-            "upload");
 }
 
 uploadArchives {
