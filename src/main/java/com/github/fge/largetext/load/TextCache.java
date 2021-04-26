@@ -20,6 +20,7 @@ package com.github.fge.largetext.load;
 
 import com.github.fge.largetext.LargeTextException;
 import com.github.fge.largetext.range.LongRange;
+import com.google.common.base.Supplier;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -30,7 +31,6 @@ import java.io.IOException;
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -54,7 +54,7 @@ import static java.nio.channels.FileChannel.*;
 public final class TextCache
 {
     private final FileChannel channel;
-    private final Charset charset;
+    private final Supplier<CharsetDecoder> decoderSupplier;
 
     /*
      * This is why we need Guava: we want cache expiry, and it has this builtin.
@@ -63,10 +63,10 @@ public final class TextCache
      */
     private final LoadingCache<TextRange, CharBuffer> cache;
 
-    public TextCache(final FileChannel channel, final Charset charset)
+    public TextCache(final FileChannel channel, final Supplier<CharsetDecoder> decoderSupplier)
     {
         this.channel = channel;
-        this.charset = charset;
+        this.decoderSupplier = decoderSupplier;
         cache = CacheBuilder.<TextRange, CharBuffer>newBuilder()
             .expireAfterAccess(30L, TimeUnit.SECONDS)
             .recordStats().build(loader());
@@ -120,7 +120,7 @@ public final class TextCache
                 final long size = byteRange.getUpperBound() - start;
                 final MappedByteBuffer buffer = channel.map(MapMode.READ_ONLY,
                     start, size);
-                final CharsetDecoder decoder = charset.newDecoder();
+                final CharsetDecoder decoder = decoderSupplier.get();
                 return decoder.decode(buffer).asReadOnlyBuffer();
             }
         };

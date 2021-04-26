@@ -24,6 +24,7 @@ import com.github.fge.largetext.load.TextRange;
 import com.github.fge.largetext.range.IntRange;
 import com.github.fge.largetext.sequence.CharSequenceFactory;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -31,7 +32,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -86,7 +87,7 @@ import java.util.logging.Logger;
  */
 @ParametersAreNonnullByDefault
 public abstract class LargeText
-    implements CharSequence, Closeable
+    implements ClosableCharSequence
 {
     private static final Logger LOGGER
         = Logger.getLogger(LargeText.class.getCanonicalName());
@@ -102,22 +103,22 @@ public abstract class LargeText
      * The only protected constructor
      *
      * @param channel the {@link FileChannel} to the (hopefully text) file
-     * @param charset the character encoding to use
+     * @param decoderSupplier the character decoder to use
      * @param quantity the quantity of size units
      * @param sizeUnit the size unit
      * @throws IOException failed to build a decoder
      */
-    protected LargeText(final FileChannel channel, final Charset charset,
+    protected LargeText(final FileChannel channel, final Supplier<CharsetDecoder> decoderSupplier,
         final int quantity, final SizeUnit sizeUnit)
         throws IOException
     {
         this.channel = Preconditions.checkNotNull(channel,
             "file channel cannot be null");
-        Preconditions.checkNotNull(charset, "charset cannot be null");
+        Preconditions.checkNotNull(decoderSupplier, "charset decoder supplier cannot be null");
         Preconditions.checkNotNull(sizeUnit, "size unit cannot be null");
         final long windowSize = sizeUnit.sizeInBytes(quantity);
-        decoder = new TextDecoder(channel, charset, windowSize);
-        loader = new TextCache(channel, charset);
+        decoder = new TextDecoder(channel, decoderSupplier, windowSize);
+        loader = new TextCache(channel, decoderSupplier);
         factory = new CharSequenceFactory(decoder, loader);
     }
 

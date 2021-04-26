@@ -18,7 +18,7 @@
 
 package com.github.fge.largetext;
 
-import com.google.common.base.Strings;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public final class ThreadSafeLargeTextTest
 {
-    private final String testString = Strings.repeat("abcdefghij", 5000);
+    private final String testString = RandomStringUtils.random(5_000);
     private final int len = testString.length();
     private final Random random = new Random(System.nanoTime());
 
